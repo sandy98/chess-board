@@ -1,11 +1,11 @@
 import { Component, Prop } from '@stencil/core';
 
 @Component({
-  tag: 'my-component',
-  styleUrl: 'my-component.css',
+  tag: 'chess-board',
+  styleUrl: 'chess-board.css',
   shadow: true
 })
-export class MyComponent {
+export class ChessBoard {
 
   @Prop() first: string;
   @Prop() last: string;

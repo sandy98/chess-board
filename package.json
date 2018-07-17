@@ -1,7 +1,7 @@
 {
-  "name": "my-component",
-  "version": "0.0.1",
-  "description": "Stencil Component Starter",
+  "name": "chess-board",
+  "version": "0.1.0",
+  "description": "Chess Board Web Component",
   "module": "dist/esm/index.js",
   "main": "dist/index.js",
   "types": "dist/types/components.d.ts",
@@ -25,12 +25,12 @@
     "type": "git",
     "url": "git+https://github.com/ionic-team/stencil-component-starter.git"
   },
-  "author": "Ionic Team",
+  "author": "Domingo E. Savoretti",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ionic-team/stencil"
+    "url": "https://github.com/sandy98/chess-board"
   },
-  "homepage": "https://github.com/ionic-team/stencil",
+  "homepage": "https://github.com/sandy98/chess-board",
   "jest": {
     "transform": {
       "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/@stencil/core/testing/jest.preprocessor.js"

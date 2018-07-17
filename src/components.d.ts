@@ -29,31 +29,29 @@ declare global {
 declare global {
 
   namespace StencilComponents {
-    interface MyComponent {
-      'first': string;
-      'last': string;
+    interface ChessBoard {
     }
   }
 
-  interface HTMLMyComponentElement extends StencilComponents.MyComponent, HTMLStencilElement {}
+  interface HTMLChessBoardElement extends StencilComponents.ChessBoard, HTMLStencilElement {}
 
-  var HTMLMyComponentElement: {
-    prototype: HTMLMyComponentElement;
-    new (): HTMLMyComponentElement;
+  var HTMLChessBoardElement: {
+    prototype: HTMLChessBoardElement;
+    new (): HTMLChessBoardElement;
   };
   interface HTMLElementTagNameMap {
-    'my-component': HTMLMyComponentElement;
+    'chess-board': HTMLChessBoardElement;
   }
   interface ElementTagNameMap {
-    'my-component': HTMLMyComponentElement;
+    'chess-board': HTMLChessBoardElement;
   }
   namespace JSX {
     interface IntrinsicElements {
-      'my-component': JSXElements.MyComponentAttributes;
+      'chess-board': JSXElements.ChessBoardAttributes;
     }
   }
   namespace JSXElements {
-    export interface MyComponentAttributes extends HTMLAttributes {
+    export interface ChessBoardAttributes extends HTMLAttributes {
       'first'?: string;
       'last'?: string;
     }

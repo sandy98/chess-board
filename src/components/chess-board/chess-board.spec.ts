@@ -1,19 +1,19 @@
 import { TestWindow } from '@stencil/core/testing';
-import { MyComponent } from './my-component';
+import { ChessBoard } from './chess-board';
 
-describe('my-component', () => {
+describe('chess-board', () => {
   it('should build', () => {
-    expect(new MyComponent()).toBeTruthy();
+    expect(new ChessBoard()).toBeTruthy();
   });
 
   describe('rendering', () => {
-    let element: HTMLMyComponentElement;
+    let element: HTMLChessBoardElement;
     let testWindow: TestWindow;
     beforeEach(async () => {
       testWindow = new TestWindow();
       element = await testWindow.load({
-        components: [MyComponent],
-        html: '<my-component></my-component>'
+        components: [ChessBoard],
+        html: '<chess-board></my-component>'
       });
     });
 
