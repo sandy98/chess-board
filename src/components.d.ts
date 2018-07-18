@@ -30,6 +30,25 @@ declare global {
 
   namespace StencilComponents {
     interface ChessBoard {
+      'chessSet': string;
+      'darkBg': string;
+      'empty': () => void;
+      'emptyFen': string;
+      'flip': () => void;
+      'getHeight': () => string;
+      'greeting': string;
+      'initialFen': string;
+      'isFlipped': () => boolean;
+      'lightBg': string;
+      'move': (from: number, to: number, promotion: string) => void;
+      'onDragFigure': (sq: any) => void;
+      'onFigureDrop': (sq: number, ev: UIEvent) => void;
+      'onSqClick': (sq: number, _: UIEvent) => void;
+      'reset': () => void;
+      'selectSet': (newSet: string) => void;
+      'selectedBg': string;
+      'setSquare': (sq: number, figure: string) => void;
+      'sets': object;
     }
   }
 
@@ -52,8 +71,14 @@ declare global {
   }
   namespace JSXElements {
     export interface ChessBoardAttributes extends HTMLAttributes {
-      'first'?: string;
-      'last'?: string;
+      'chessSet'?: string;
+      'darkBg'?: string;
+      'emptyFen'?: string;
+      'greeting'?: string;
+      'initialFen'?: string;
+      'lightBg'?: string;
+      'selectedBg'?: string;
+      'sets'?: object;
     }
   }
 }

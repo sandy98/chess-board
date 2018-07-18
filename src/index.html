@@ -8,8 +8,69 @@
 
 </head>
 <body>
+  <div
+    style="display: flex; 
+           padding: 1rem; 
+           flex-direction: column; 
+           justify-content: space-between; 
+           align-items: center; 
+           border: solid 1px; 
+           margin-top: 30px; 
+           border-radius: 20px;
+           height: 90%;
+           min-height: 90%;
+           max-height: 90%;"
+  >
+    <div style="width: 50%;">
+      <chess-board chess-set="default">
+        <div slot="greeting"></div>
+      </chess-board>
+    </div>
+    <div>
+      <button onclick="document.querySelector('chess-board').flip()">Flip Board</button>
+    </div>
+    <div>
+      <select id="chess-sets">
+      </select>
+    </div>
+    <div>
+      <button onclick="document.querySelector('chess-board').reset()">Reset Board</button>
+      <button onclick="document.querySelector('chess-board').empty()">Empty Board</button>
+    </div>
+  </div>
+  <script type="text/javascript">
 
-  <chess-board></chess-board>
+    const capitalize = function(word) {
+      let arr = word.split('');
+      arr = arr.map((ch) => ch.toLowerCase());
+      arr[0] = arr[0].toUpperCase();
+      return arr.join('');
+    }
 
+    const onselectchange = function(ev) {
+      ev.preventDefault();
+      console.log(`Set changed to ${ev.target.value}`);
+      document.querySelector("chess-board").selectSet(ev.target.value);
+      return true;
+    }
+
+    const loadselector = function() {
+      console.log("Initializing chess sets selection");
+      const selectSet = document.querySelector("#chess-sets");
+      const board = document.querySelector("chess-board");
+      window.board = board;
+      for (k in board.sets) {
+        let opt = document.createElement('option');
+        opt.value = k;
+        opt.innerHTML = capitalize(k);
+        selectSet.appendChild(opt);
+      }
+      selectSet.value = board.chessSet;
+      selectSet.onchange = onselectchange;
+    }
+
+    document.addEventListener('load', loadselector);
+    document.body.onload = loadselector;
+  </script>
 </body>
 </html>

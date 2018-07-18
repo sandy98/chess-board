@@ -13,31 +13,18 @@ describe('chess-board', () => {
       testWindow = new TestWindow();
       element = await testWindow.load({
         components: [ChessBoard],
-        html: '<chess-board></my-component>'
+        html: '<chess-board></chess-board>'
       });
     });
 
     it('should work without parameters', () => {
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m');
+      expect(element.textContent.trim()).toEqual("Hello, World! I'm ChessBoard Web Component and my initial chess set is");
     });
 
-    it('should work with a first name', async () => {
-      element.first = 'Peter';
+    it('should work with a initial chess set', async () => {
+      element.initialSet = 'veronika';
       await testWindow.flush();
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m Peter');
-    });
-
-    it('should work with a last name', async () => {
-      element.last = 'Parker';
-      await testWindow.flush();
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m  Parker');
-    });
-
-    it('should work with both a first and a last name', async () => {
-      element.first = 'Peter';
-      element.last = 'Parker';
-      await testWindow.flush();
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m Peter Parker');
+      expect(element.textContent.trim()).toEqual("Hello, World! I'm ChessBoard Web Component and my initial chess set is veronika");
     });
   });
 });

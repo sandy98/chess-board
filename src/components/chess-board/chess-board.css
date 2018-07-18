@@ -1,1 +1,9 @@
+.board {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    color: steelblue;
+    background-color: transparent;
+    border: solid 1px;
+}
 
