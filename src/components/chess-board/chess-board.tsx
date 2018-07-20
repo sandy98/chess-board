@@ -74,9 +74,10 @@ export class ChessBoard {
   @Prop({mutable: true}) selectedBg: string = "#bfd"
   @Prop({mutable: true}) autoPromotion: string = null
   @Watch('autoPromotion')
-  validateFigure(newValue: string, _) {
+  validateFigure(newValue: string, oldValue) {
     if (newValue !== null && newValue !== '' && !"NBRQ".match(newValue)) {
-      throw new Error('Promotion figure must be one of: N - B - R - Q')
+      console.log('Promotion figure must be one of: N - B - R - Q')
+      this.autoPromotion = oldValue
     }
   }
  
@@ -91,6 +92,7 @@ export class ChessBoard {
 
   @State() mode: string = this.initialMode
   @State() position: string = this.initialFen
+  @State() positions: string[] = [this.initialFen]
   @State() flipped: boolean = false
   @State() isMounted: boolean = false
   @State() height: string 
@@ -199,6 +201,7 @@ export class ChessBoard {
   @Method()
   empty() {
     this.position = this.emptyFen
+    this.positions = [this.emptyFen]
     this.sqFrom = -1
     this.promotionSq = -1
   }
@@ -206,6 +209,7 @@ export class ChessBoard {
   @Method()
   reset() {
     this.position = this.initialFen
+    this.positions = [this.initialFen]
     this.sqFrom = -1
     this.promotionSq = -1
   }
@@ -219,6 +223,8 @@ export class ChessBoard {
 
   @Method()
   move(from: number, to: number, promotion: string) {
+    if (this.position !== this.positions[this.positions.length - 1]) return
+
     let enPass = this.isEnPassant(from, to)
     let figure = promotion ? promotion : this.position[from]
 
@@ -227,28 +233,32 @@ export class ChessBoard {
 
     if (enPass) {
       this.setSquare(to + enPass, '0')
-      return
     }
 
     if (figure === 'K' && from === 4 && to === 6) {
       this.setSquare(7, '0')
       this.setSquare(5, 'R')
-      return
     }
     if (figure === 'K' && from === 4 && to === 2) {
       this.setSquare(0, '0')
       this.setSquare(3, 'R')
-      return
     }
     if (figure === 'k' && from === 60 && to === 62) {
       this.setSquare(63, '0')
       this.setSquare(61, 'r')
-      return
     }
     if (figure === 'k' && from === 60 && to === 58) {
       this.setSquare(56, '0')
       this.setSquare(59, 'r')
     }
+    this.positions = [...this.positions, this.position]
+  }
+
+  @Method()
+  goto(n: number) {
+    if (n < 0) n = 0
+    if (n >= this.positions.length) n = this.positions.length - 1
+    this.position = this.positions[n]
   }
 
   @Method()

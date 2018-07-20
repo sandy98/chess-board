@@ -41,6 +41,7 @@ declare global {
       'getCoords': () => { left: any; top: any; };
       'getHeight': () => string;
       'getPromotionFigures': () => string[];
+      'goto': (n: number) => void;
       'greeting': string;
       'initialFen': string;
       'initialMode': string;
