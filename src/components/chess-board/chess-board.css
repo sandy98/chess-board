@@ -1,3 +1,4 @@
+
 .board {
     width: 100%;
     display: flex;
@@ -6,10 +7,27 @@
     background-color: transparent;
     border: solid 1px;
 }
-.chess-form {
+
+.complements {
     color: steelblue;
     height: 50%;
     margin-bottom: 0.5rem;
     border: solid 1px;
 }
 
+.chess-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.board-setup {
+    height: 95%;
+    display: flex;
+    padding: 8px;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    background: rgb(220, 217, 219)
+}

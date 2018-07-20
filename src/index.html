@@ -32,7 +32,7 @@
            min-height: 90%;
            max-height: 90%;"
   >
-    <div style="width: 75%;">
+    <div style="width: 60%;">
       <chess-board>
         <div slot="external-contents">
           <div style="margin-bottom: 0.5rem; color:chocolate">
@@ -75,19 +75,28 @@
                   <img id="img-r" />
               </div>
               <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'N'">
-                  <img id="img-n" />
-                </div>
-                <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'B'">
-                    <img id="img-b" />
-                </div>
-                <div style="background: beige; cursor: pointer;">
-                    <button onclick = "document.querySelector('chess-board').autoPromotion = ''">None</button>
-                </div>
+                <img id="img-n" />
               </div>
+              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'B'">
+                  <img id="img-b" />
+              </div>
+              <div style="background: beige; cursor: pointer;">
+                <button onclick = "document.querySelector('chess-board').autoPromotion = ''">None</button>
+              </div>
+            </div>
+            <div class="up-and-down">
+              <label>Navigate game</label>
+              <button onclick="goto(0)">&lt;&lt;</button>&nbsp;
+              <button onclick="goto(-1)">&lt;</button>&nbsp;
+              <button onclick="goto(1)">&gt;</button>&nbsp;
+              <button onclick="goto(1000)">&gt;&gt;</button>
+            </div>
             <div class="up-and-down">
               <button onclick="document.querySelector('chess-board').reset()">Reset Board</button>
               &nbsp;&nbsp;&nbsp;
               <button onclick="document.querySelector('chess-board').empty()">Empty Board</button>
+              &nbsp;&nbsp;&nbsp;
+              <button onclick="document.querySelector('chess-board').setup()">Setup Board</button>
             </div>
           </div>      
          </div>
@@ -96,12 +105,25 @@
     </div>
 
   <script type="text/javascript">
+    let currPos = 0
 
     const capitalize = function(word) {
       let arr = word.split('');
       arr = arr.map((ch) => ch.toLowerCase());
       arr[0] = arr[0].toUpperCase();
       return arr.join('');
+    }
+
+    const goto = function(n) {
+      let max = this.board.getLength()
+      if (n < -1) currPos = 0
+      if (n >= max) currPos = max - 1
+      if (n === 0) currPos = 0
+      if (n === 1) currPos++
+      if (n === -1) currPos--
+      if (currPos < 0) currPos = 0
+      if (currPos >= max) currPos = max - 1
+      this.board.goto(currPos)
     }
 
     const onselectchange = function(ev) {

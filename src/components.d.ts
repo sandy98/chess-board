@@ -38,13 +38,17 @@ declare global {
       'exportFen': () => string;
       'flip': () => void;
       'forceUpdate': () => void;
-      'getCoords': () => { left: any; top: any; };
+      'getCoords': () => { left: number; top: number; };
       'getHeight': () => string;
+      'getLength': () => number;
+      'getMode': () => string;
       'getPromotionFigures': () => string[];
+      'getTurn': () => string;
       'goto': (n: number) => void;
       'greeting': string;
       'initialFen': string;
       'initialMode': string;
+      'initialTurn': string;
       'isBlackFigure': (f: string) => boolean;
       'isEnPassant': (from: number, to: number) => false | 8 | -8;
       'isFlipped': () => boolean;
@@ -66,6 +70,8 @@ declare global {
       'setSchema': (n: number) => void;
       'setSquare': (sq: number, figure: string) => void;
       'sets': object;
+      'setup': () => void;
+      'uuid': string;
       'version': string;
     }
   }
@@ -96,11 +102,13 @@ declare global {
       'greeting'?: string;
       'initialFen'?: string;
       'initialMode'?: string;
+      'initialTurn'?: string;
       'lightBg'?: string;
       'modes'?: object;
       'schemas'?: object;
       'selectedBg'?: string;
       'sets'?: object;
+      'uuid'?: string;
       'version'?: string;
     }
   }
