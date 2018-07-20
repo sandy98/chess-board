@@ -30,25 +30,42 @@ declare global {
 
   namespace StencilComponents {
     interface ChessBoard {
+      'autoPromotion': string;
       'chessSet': string;
       'darkBg': string;
       'empty': () => void;
       'emptyFen': string;
+      'exportFen': () => string;
       'flip': () => void;
+      'forceUpdate': () => void;
+      'getCoords': () => { left: any; top: any; };
       'getHeight': () => string;
+      'getPromotionFigures': () => string[];
       'greeting': string;
       'initialFen': string;
+      'initialMode': string;
+      'isBlackFigure': (f: string) => boolean;
+      'isEnPassant': (from: number, to: number) => false | 8 | -8;
       'isFlipped': () => boolean;
+      'isFoe': (sq1: number, sq2: number) => boolean;
+      'isFriend': (sq1: number, sq2: number) => boolean;
+      'isPromoting': (from: number, to: number) => boolean;
+      'isWhiteFigure': (f: string) => boolean;
       'lightBg': string;
+      'modes': object;
       'move': (from: number, to: number, promotion: string) => void;
       'onDragFigure': (sq: any) => void;
       'onFigureDrop': (sq: number, ev: UIEvent) => void;
-      'onSqClick': (sq: number, _: UIEvent) => void;
+      'onSqClick': (sq: number, _: UIEvent) => number;
       'reset': () => void;
+      'schemas': object;
       'selectSet': (newSet: string) => void;
       'selectedBg': string;
+      'setBg': (light: any, dark: any) => void;
+      'setSchema': (n: number) => void;
       'setSquare': (sq: number, figure: string) => void;
       'sets': object;
+      'version': string;
     }
   }
 
@@ -71,14 +88,19 @@ declare global {
   }
   namespace JSXElements {
     export interface ChessBoardAttributes extends HTMLAttributes {
+      'autoPromotion'?: string;
       'chessSet'?: string;
       'darkBg'?: string;
       'emptyFen'?: string;
       'greeting'?: string;
       'initialFen'?: string;
+      'initialMode'?: string;
       'lightBg'?: string;
+      'modes'?: object;
+      'schemas'?: object;
       'selectedBg'?: string;
       'sets'?: object;
+      'version'?: string;
     }
   }
 }

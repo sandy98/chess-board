@@ -6,4 +6,10 @@
     background-color: transparent;
     border: solid 1px;
 }
+.chess-form {
+    color: steelblue;
+    height: 50%;
+    margin-bottom: 0.5rem;
+    border: solid 1px;
+}
 
