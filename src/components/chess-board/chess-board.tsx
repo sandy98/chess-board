@@ -238,8 +238,9 @@ export class ChessBoard {
     if (this.position !== this.positions[this.positions.length - 1]) return
 
     let figure = promotion ? promotion : this.position[from]
-    if (this.isWhiteFigure(figure) && this.turn === 'b' || this.isBlackFigure(figure) && this.turn === 'w') {
-      return
+    if (this.isWhiteFigure(figure) && this.turn === 'b' || 
+        this.isBlackFigure(figure) && this.turn === 'w') {
+      if (this.boardMode !== 'MODE_SETUP') return
     }
 
     let enPass = this.isEnPassant(from, to)
@@ -268,8 +269,12 @@ export class ChessBoard {
       this.setSquare(56, '0')
       this.setSquare(59, 'r')
     }
-    this.positions = [...this.positions, this.position]
-    this.turn = this.turn === 'w' ? 'b' : 'w'
+    if (this.boardMode !== 'MODE_SETUP') {
+      this.positions = [...this.positions, this.position]
+      this.turn = this.turn === 'w' ? 'b' : 'w'
+    } else {
+      this.positions = [this.position]
+    }
   }
 
   @Method()
@@ -283,6 +288,12 @@ export class ChessBoard {
   getPromotionFigures() {
     if (this.sqFrom === -1) return []
     return this.isWhiteFigure(this.position[this.sqFrom]) ? "QRNB".split('') : "qrnb".split('')
+  }
+
+  @Method()
+  isTurnConflict(figure: string) {
+    return this.turn === 'w' && this.isBlackFigure(figure) ||
+           this.turn === 'b' && this.isWhiteFigure(figure)
   }
 
   @Method()
@@ -329,11 +340,12 @@ export class ChessBoard {
           break
       
         default:
-          this.sqFrom = 1
+          this.sqFrom = -1
           return
       }
 
       this.setSquare(sq, fig)
+      this.positions = [this.position]
       this.sqFrom = -1
       return
     }
@@ -344,7 +356,7 @@ export class ChessBoard {
     } else if (sq === this.sqFrom) {
       this.sqFrom = -1
     } else {
-      if (this.isFriend(this.sqFrom, sq)) {
+      if (this.isFriend(this.sqFrom, sq) && this.boardMode !== 'MODE_SETUP') {
         this.sqFrom = -1
         return
       }
@@ -358,6 +370,11 @@ export class ChessBoard {
                                         this.autoPromotion.toUpperCase())
             return this.sqFrom = -1
           }
+          if (!(this.boardMode === 'MODE_SETUP') && this.isTurnConflict(figure)) {
+            this.sqFrom = -1
+            return              
+          }
+
           this.promotionSq = sq
           return 
           /*

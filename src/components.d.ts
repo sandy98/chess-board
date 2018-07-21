@@ -55,6 +55,7 @@ declare global {
       'isFoe': (sq1: number, sq2: number) => boolean;
       'isFriend': (sq1: number, sq2: number) => boolean;
       'isPromoting': (from: number, to: number) => boolean;
+      'isTurnConflict': (figure: string) => boolean;
       'isWhiteFigure': (f: string) => boolean;
       'lightBg': string;
       'modes': object;
