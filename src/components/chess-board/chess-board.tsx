@@ -1,4 +1,4 @@
-import { Component, Prop, State, Method, Listen, Watch} from '@stencil/core'
+import { Component, Prop, State, Method, Listen, Watch, Event, EventEmitter} from '@stencil/core'
 import chessSets  from './chess-sets'
 
 const version = '0.1.0'
@@ -59,6 +59,8 @@ const v4 = () => Math.round(new Date().getTime()).toString(16)
 })
 export class ChessBoard {
 
+  @Event() moveEmitter: EventEmitter
+
   @Prop() version: string = version
   @Prop() uuid: string = v4()
   @Prop() greeting: string = `ChessBoard version ${this.version}`
@@ -75,6 +77,7 @@ export class ChessBoard {
   @Prop({mutable: true}) lightBg: string = this.schemas['brown']['light']
   @Prop({mutable: true}) darkBg: string = this.schemas['brown']['dark']
   @Prop({mutable: true}) selectedBg: string = "#bfd"
+  @Prop({mutable: true}) rightPanel: boolean = true
   @Prop({mutable: true}) autoPromotion: string = null
   @Watch('autoPromotion')
   validateFigure(newValue: string, oldValue) {
@@ -115,11 +118,13 @@ export class ChessBoard {
 
   componentDidLoad() {
     this.isMounted = true
-    console.log('Component has been mounted');
-    console.log(this.uuid)
-    //let compressed = compressFen(inv56(this.position))
-    //console.log(`Compressed FEN: ${compressed}`)
-    //console.log(`Expanded and inverted FEN: ${inv56(expandFen(compressed))}`)
+    console.clear()
+    console.log(`Component has been mounted with Id ${this.uuid}`)
+  }
+
+  @Listen('moveEmitter')
+  moveHandler(event: CustomEvent) {
+    console.log('Received the custom move event: ', event.detail);
   }
 
   @Listen('window:resize')
@@ -133,36 +138,30 @@ export class ChessBoard {
     return compressFen(inv56(this.position))
   }
 
-  @Method()
   isWhiteFigure(f: string) {
     return !!"PNBRQK".match(f)
   }
 
-  @Method()
   isBlackFigure(f: string) {
     return !!"pnbrqk".match(f)
   }
 
-  @Method()
   isFriend(sq1: number, sq2: number) {
     return !!("PNBRQK".match(this.position[sq1]) && "PNBRQK".match(this.position[sq2]) ||
            "pnbrqk".match(this.position[sq1]) && "pnbrqk".match(this.position[sq2]))
   }
 
-  @Method()
   isFoe(sq1: number, sq2: number) {
     return !!("PNBRQK".match(this.position[sq1]) && "pnbrqk".match(this.position[sq2]) ||
            "pnbrqk".match(this.position[sq1]) && "PNBRQK".match(this.position[sq2]))
   }
 
-  @Method()
   isPromoting(from: number, to: number) {
     let figure = this.position[from]
     let r = row(to)
     return figure === 'P' && r === 7 || figure === 'p' && r === 0
   }
 
-  @Method()
   isEnPassant(from: number, to: number) {
     let figureFrom = this.position[from]
     let figureTo = this.position[to]
@@ -275,6 +274,7 @@ export class ChessBoard {
     } else {
       this.positions = [this.position]
     }
+    this.moveEmitter.emit({from: from, to: to, promotion: promotion})
   }
 
   @Method()
@@ -284,23 +284,19 @@ export class ChessBoard {
     this.position = this.positions[n]
   }
 
-  @Method()
   getPromotionFigures() {
     if (this.sqFrom === -1) return []
     return this.isWhiteFigure(this.position[this.sqFrom]) ? "QRNB".split('') : "qrnb".split('')
   }
 
-  @Method()
   isTurnConflict(figure: string) {
     return this.turn === 'w' && this.isBlackFigure(figure) ||
            this.turn === 'b' && this.isWhiteFigure(figure)
   }
 
-  @Method()
   onSqClick(sq: number, _: UIEvent) {
     if (this.boardMode === 'MODE_SETUP' && this.sqFrom < -1) {
       let fig = '0'
-      fig
       switch (this.sqFrom) {
         case -2:
           fig = 'p'
@@ -360,23 +356,21 @@ export class ChessBoard {
         this.sqFrom = -1
         return
       }
+      let figure: string = this.position[this.sqFrom]
+      if (!(this.boardMode === 'MODE_SETUP') && this.isTurnConflict(figure)) {
+        this.sqFrom = -1
+        return              
+      }
       if (!this.isPromoting(this.sqFrom, sq)) { 
         this.move(this.sqFrom, sq, null)
         this.sqFrom = -1 } else {
-          let figure: string = this.position[this.sqFrom]
           if (!!this.autoPromotion) {
             this.move(this.sqFrom, sq, this.isBlackFigure(figure) ? 
                                          this.autoPromotion.toLowerCase() :
                                         this.autoPromotion.toUpperCase())
             return this.sqFrom = -1
           }
-          if (!(this.boardMode === 'MODE_SETUP') && this.isTurnConflict(figure)) {
-            this.sqFrom = -1
-            return              
-          }
-
           this.promotionSq = sq
-          return 
           /*
           let promotion: string
           while (!promotion) {
@@ -394,12 +388,10 @@ export class ChessBoard {
     }
   }
 
-  @Method()
   onFigureDrop(sq: number, ev: UIEvent) {
     this.onSqClick(sq,ev)
   }
 
-  @Method()
   onDragFigure(sq) {
     this.isDragging = true
     this.sqFrom = sq
@@ -418,6 +410,9 @@ export class ChessBoard {
   }
 
   @Method()
+  getSets() {return this.sets}
+  
+  @Method()
   getMode() {return this.boardMode}
 
   @Method()
@@ -425,6 +420,11 @@ export class ChessBoard {
 
   @Method()
   getTurn() {return this.turn}
+
+  @Method()
+  togglePanel() {
+    this.rightPanel = !this.rightPanel
+  }
 
   render() {
     let that = this
@@ -448,11 +448,13 @@ export class ChessBoard {
               />)
     }
     this.getHeight()
-    console.log(`Rendering component with position: ${this.exportFen()}`)
+    // console.log(`Rendering component with position: ${this.exportFen()}`)
     let enumerator = [...new Array(8)].map((_, idx) => idx)
     let rows = enumerator.map((y) => {
       return (<div 
-                style={{display: 'flex', flexDirection: 'row', height: '12.5%'}} 
+                style={{display: 'flex', 
+                        flexDirection: 'row', 
+                        height: '12.5%'}} 
                 key={y}
                 onDblClick={(ev: UIEvent) => {
                                               ev.preventDefault()
@@ -488,15 +490,22 @@ export class ChessBoard {
     })
 
     return (
-      <div style={{width: '100%', display: 'flex', flexDirection: 'row', border: 'dotted 1px', padding: '3px'}}>
+      <div
+        id={`${this.uuid}-parent`} 
+        style={{width: '100%', 
+                display: 'flex', 
+                flexDirection: window.innerHeight > window.innerWidth ? 'column': 'row', 
+                border: 'dotted 1px silver', 
+                padding: '0'}}
+      >
         <div id={this.uuid} class="board" style={{height: this.height, 
                                    width: '65%', 
-                                   marginRight: '1rem'}}
+                                   marginRight: '0'}}
         >
           {rows}
         </div>
         <div class="promotion-panel"
-          style={{display: this.promotionSq === -1 ? 'none' : 'flex', 
+          style={{display: this.promotionSq === -1 ? 'none' : 'flex',
                   flexDirection: 'row',
                   position: 'absolute',
                   left: `${Math.floor(coords['left'] + 
@@ -534,7 +543,16 @@ export class ChessBoard {
            )
          }
         </div>
-        <div style={{width: '35%', display: 'flex', flexDirection: 'column'}}>
+        <div 
+          style={{
+            width: '35%', 
+            display: this.rightPanel ? 'flex' : 'none', 
+            flexDirection: 'column',
+            marginLeft: '0',
+            paddingLeft: '0', 
+            paddingRight: '0.5rem', 
+    }}
+        >
           <div class="complements" 
             onDragEnter={(ev: UIEvent) => ev.preventDefault()} 
             onDragOver={(ev: UIEvent) => ev.preventDefault()}

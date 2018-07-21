@@ -42,28 +42,19 @@ declare global {
       'getHeight': () => string;
       'getLength': () => number;
       'getMode': () => string;
-      'getPromotionFigures': () => string[];
+      'getSets': () => object;
       'getTurn': () => string;
       'goto': (n: number) => void;
       'greeting': string;
       'initialFen': string;
       'initialMode': string;
       'initialTurn': string;
-      'isBlackFigure': (f: string) => boolean;
-      'isEnPassant': (from: number, to: number) => false | 8 | -8;
       'isFlipped': () => boolean;
-      'isFoe': (sq1: number, sq2: number) => boolean;
-      'isFriend': (sq1: number, sq2: number) => boolean;
-      'isPromoting': (from: number, to: number) => boolean;
-      'isTurnConflict': (figure: string) => boolean;
-      'isWhiteFigure': (f: string) => boolean;
       'lightBg': string;
       'modes': object;
       'move': (from: number, to: number, promotion: string) => void;
-      'onDragFigure': (sq: any) => void;
-      'onFigureDrop': (sq: number, ev: UIEvent) => void;
-      'onSqClick': (sq: number, _: UIEvent) => number;
       'reset': () => void;
+      'rightPanel': boolean;
       'schemas': object;
       'selectSet': (newSet: string) => void;
       'selectedBg': string;
@@ -72,6 +63,7 @@ declare global {
       'setSquare': (sq: number, figure: string) => void;
       'sets': object;
       'setup': () => void;
+      'togglePanel': () => void;
       'uuid': string;
       'version': string;
     }
@@ -106,6 +98,8 @@ declare global {
       'initialTurn'?: string;
       'lightBg'?: string;
       'modes'?: object;
+      'onMoveEmitter'?: (event: CustomEvent) => void;
+      'rightPanel'?: boolean;
       'schemas'?: object;
       'selectedBg'?: string;
       'sets'?: object;

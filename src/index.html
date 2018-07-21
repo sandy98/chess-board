@@ -27,7 +27,7 @@
            align-items: flex-start; 
            border: solid 1px; 
            margin-top: 30px; 
-           border-radius: 20px;
+           border-radius: 0;
            height: 90%;
            min-height: 90%;
            max-height: 90%;"
@@ -35,7 +35,13 @@
     <div style="width: 60%;">
       <chess-board>
         <div slot="external-contents">
-          <div style="margin-bottom: 0.5rem; color:chocolate">
+          <div style="margin-bottom: 0.5rem; 
+                      color:chocolate; 
+                      display: flex; 
+                      justify-content: center; 
+                      align-items: center;
+                      padding: 0.5rem;"
+          >
             ChessBoard by Domingo E. Savoretti, powered by Stencil.js
           </div>
           <div style="width: 95%;
@@ -43,9 +49,10 @@
                       flex-direction: column; 
                       justify-content: space-evenly;
                       align-items:center;
-                      border: solid 1px; 
-                      border-radius: 10px;
-                      padding: 0.5rem;"
+                      border: solid 1px silver; 
+                      border-radius: 0;
+                      padding: 0.5rem;
+                      margin-left: 0;"
           >
             <div class="up-and-down">
               <button onclick="document.querySelector('chess-board').flip()">Flip Board</button>
@@ -65,27 +72,27 @@
               </select>
             </div>
             <div class="up-and-down">
-              <div style="up-and-down">
+              <div class="up-and-down">
                 <label style="font-size: 12px">Select figure for automatic promotion</label>
               </div>
-              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'Q'">
+              <div style="background: beige; cursor: pointer;">
+                  <button onclick = "document.querySelector('chess-board').autoPromotion = ''; setPrBg();">None</button>
+                </div>
+              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'Q'; setPrBg();">
                 <img id="img-q"/>
               </div>
-              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'R'">
+              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'R'; setPrBg();">
                   <img id="img-r" />
               </div>
-              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'N'">
+              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'N'; setPrBg();">
                 <img id="img-n" />
               </div>
-              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'B'">
+              <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'B'; setPrBg();">
                   <img id="img-b" />
-              </div>
-              <div style="background: beige; cursor: pointer;">
-                <button onclick = "document.querySelector('chess-board').autoPromotion = ''">None</button>
               </div>
             </div>
             <div class="up-and-down">
-              <label>Navigate game</label>
+              <label>Navigate game&nbsp;&nbsp;&nbsp;</label>
               <button onclick="goto(0)">&lt;&lt;</button>&nbsp;
               <button onclick="goto(-1)">&lt;</button>&nbsp;
               <button onclick="goto(1)">&gt;</button>&nbsp;
@@ -102,8 +109,10 @@
          </div>
         </div>
       </chess-board>  
-    </div>
-
+  </div>
+  <div style="border: solid 1px transparent; margin-top: 0.5rem;">
+    <button onclick="board.togglePanel()">Toggle board panel</button>
+  </div>
   <script type="text/javascript">
     let currPos = 0
 
@@ -126,6 +135,13 @@
       this.board.goto(currPos)
     }
 
+    const setPrBg = function() {
+      document.querySelector('#img-q').style.background = board.autoPromotion === 'Q' ? board.darkBg : 'beige';
+      document.querySelector('#img-r').style.background = board.autoPromotion === 'R' ? board.darkBg : 'beige';
+      document.querySelector('#img-n').style.background = board.autoPromotion === 'N' ? board.darkBg : 'beige';
+      document.querySelector('#img-b').style.background = board.autoPromotion === 'B' ? board.darkBg : 'beige';
+    }
+
     const onselectchange = function(ev) {
       ev.preventDefault();
       console.log(`Set changed to ${ev.target.value}`);
@@ -137,6 +153,7 @@
       ev.preventDefault();
       //console.log(`Set changed to ${ev.target.value}`);
       document.querySelector("chess-board").setSchema(ev.target.selectedIndex);
+      setPrBg();
       return true;
     }
   
