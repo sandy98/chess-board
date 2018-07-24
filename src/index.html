@@ -16,7 +16,6 @@
       color: steelblue;
     }
   </style>
-
 </head>
 <body>
   <div
@@ -37,12 +36,13 @@
         <div slot="external-contents">
           <div style="margin-bottom: 0.5rem; 
                       color:chocolate; 
+                      flex-direction: column;
                       display: flex; 
                       justify-content: center; 
                       align-items: center;
                       padding: 0.5rem;"
           >
-            ChessBoard by Domingo E. Savoretti, powered by Stencil.js
+            ChessBoard <hr/>by Domingo E. Savoretti <hr/>powered by Stencil.js<br/>
           </div>
           <div style="width: 95%;
                       display: flex; 
@@ -76,19 +76,19 @@
                 <label style="font-size: 12px">Select figure for automatic promotion</label>
               </div>
               <div style="background: beige; cursor: pointer;">
-                  <button onclick = "document.querySelector('chess-board').autoPromotion = ''; setPrBg();">None</button>
+                  <button id="no-autoprom" onclick = "document.querySelector('chess-board').autoPromotion = ''; setPrBg();">None</button>
                 </div>
               <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'Q'; setPrBg();">
-                <img id="img-q"/>
+                <img id="img-q" style="width:32px; height: 32px;"/>
               </div>
               <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'R'; setPrBg();">
-                  <img id="img-r" />
+                  <img id="img-r" style="width:32px; height: 32px;" />
               </div>
               <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'N'; setPrBg();">
-                <img id="img-n" />
+                <img id="img-n" style="width:32px; height: 32px;" />
               </div>
               <div style="background: beige; cursor: pointer;" onclick = "document.querySelector('chess-board').autoPromotion = 'B'; setPrBg();">
-                  <img id="img-b" />
+                  <img id="img-b" style="width:32px; height: 32px;" />
               </div>
             </div>
             <div class="up-and-down">
@@ -136,10 +136,11 @@
     }
 
     const setPrBg = function() {
-      document.querySelector('#img-q').style.background = board.autoPromotion === 'Q' ? board.darkBg : 'beige';
-      document.querySelector('#img-r').style.background = board.autoPromotion === 'R' ? board.darkBg : 'beige';
-      document.querySelector('#img-n').style.background = board.autoPromotion === 'N' ? board.darkBg : 'beige';
-      document.querySelector('#img-b').style.background = board.autoPromotion === 'B' ? board.darkBg : 'beige';
+      document.querySelector('#no-autoprom').disabled = !board.autoPromotion
+      document.querySelector('#img-q').style.background = board.autoPromotion === 'Q' ? board.darkBg : board.lightBg;
+      document.querySelector('#img-r').style.background = board.autoPromotion === 'R' ? board.darkBg : board.lightBg;
+      document.querySelector('#img-n').style.background = board.autoPromotion === 'N' ? board.darkBg : board.lightBg;
+      document.querySelector('#img-b').style.background = board.autoPromotion === 'B' ? board.darkBg : board.lightBg;
     }
 
     const onselectchange = function(ev) {
@@ -156,13 +157,13 @@
       setPrBg();
       return true;
     }
-  
 
     const loadselector = function() {
       console.log("Initializing chess sets selection");
-
+      
       const board = document.querySelector("chess-board");
       window.board = board;
+      board.setSchema(1)
 
       const selectSet = document.querySelector("#chess-sets");
       for (k in board.sets) {
@@ -171,8 +172,11 @@
         opt.innerHTML = capitalize(k);
         selectSet.appendChild(opt);
       }
+
+
       selectSet.value = board.chessSet;
       selectSet.onchange = onselectchange;
+
 
       const selectSchema = document.querySelector("#board-schemas");
       let i = 0
@@ -190,7 +194,14 @@
       document.querySelector('#img-n').src = board.sets[board.chessSet]['N']
       document.querySelector('#img-b').src = board.sets[board.chessSet]['B']
 
-      board.setSchema(1)
+      setPrBg()
+
+      document.addEventListener('newMove', (ev) => {
+        console.log(`Received new move from chessboard: from = ${ev.detail.from}, to = ${ev.detail.to} originated in ${ev.target}`)
+        currPos = board.getLength() -1
+      })
+
+      
     }
 
     document.addEventListener('load', loadselector);
