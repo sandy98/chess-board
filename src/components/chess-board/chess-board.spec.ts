@@ -1,4 +1,4 @@
-import { TestWindow } from '@stencil/core/testing';
+import { TestWindow } from '@stencil/core/dist/testing';
 import { ChessBoard } from './chess-board';
 
 describe('chess-board', () => {
@@ -22,7 +22,7 @@ describe('chess-board', () => {
     });
 
     it('should work with a initial chess set', async () => {
-      element.initialSet = 'veronika';
+      element.chessSet = 'veronika';
       await testWindow.flush();
       expect(element.textContent.trim()).toEqual("Hello, World! I'm ChessBoard Web Component and my initial chess set is veronika");
     });

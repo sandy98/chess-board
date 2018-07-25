@@ -20,8 +20,8 @@ export class ChessBoard {
   @Prop() greeting: string = `ChessBoard version ${this.version}`
 
   @Prop({mutable: true}) game: any = new SimpleGame()
-  @Prop() initialPosition: string = `RNBQKBNR${"P".repeat(8)}${"0".repeat(32)}${"p".repeat(8)}rnbqkbnr`
-  @Prop() emptyFen: string = `${"0".repeat(64)}`
+  @Prop() initialPosition: string = this.game.position()
+  @Prop() emptyPos: string = `${"0".repeat(64)}`
   @Prop({mutable: true}) chessSet: string = "default"
   @Prop() sets: object = chessSets
   @Prop() schemas: object = {
@@ -51,9 +51,7 @@ export class ChessBoard {
   }
 
   @Prop() initialMode: string = this.modes['MODE_PLAY']
-  @Prop() initialTurn: string = 'w'
     
-  @State() turn: string = this.initialTurn
   @State() boardMode: string = this.initialMode
   @Watch('boardMode')
   testMode(newValue: string, oldValue: string) {
@@ -71,16 +69,29 @@ export class ChessBoard {
   @State() isDragging: boolean = false
   @State() promotionSq: number = -1
   @State() overSized: boolean = false
+  @State() current: number = 0
 
   componentDidLoad() {
     this.isMounted = true
     console.clear()
-    console.log(`Component has been mounted with Id ${this.uuid}`)
+    //console.log(`Component has been mounted with Id ${this.uuid}`)
+    //console.log("defaultFen = "  + SimpleGame.defaultFen())
+    console.log(SimpleGame.fen2obj(SimpleGame.defaultFen()))
   }
 
   @Listen('newMove')
   moveHandler(event: CustomEvent) {
-    console.log('Received the custom move event: ', event.detail);
+    //console.log('Received the custom move event: ', event.detail);
+    //console.log(`Now board has ${this.positions.length} positions`)
+    event.detail
+    let notation = document.getElementById(`${this.uuid}-notation`)
+    if (notation) {
+      console.log("ScrollTop: " + notation.scrollTop + " - ScrollHeight: " + notation.scrollHeight)
+      notation.scrollTop = notation.scrollHeight
+    }
+    else {
+      console.log("Couldn't scroll element " + `${this.uuid}-notation`)
+    }
   }
 
   @Listen('window:resize')
@@ -95,19 +106,6 @@ export class ChessBoard {
     this.reset()
   }
 
-  @Method()
-  exportFen() {
-    return SimpleGame.compressFen(SimpleGame.inv56(this.position))
-  }
-
-  isWhiteFigure(f: string) {
-    return !!"PNBRQK".match(f)
-  }
-
-  isBlackFigure(f: string) {
-    return !!"pnbrqk".match(f)
-  }
-
   isFriend(sq1: number, sq2: number) {
     return !!("PNBRQK".match(this.position[sq1]) && "PNBRQK".match(this.position[sq2]) ||
            "pnbrqk".match(this.position[sq1]) && "pnbrqk".match(this.position[sq2]))
@@ -118,19 +116,13 @@ export class ChessBoard {
            "pnbrqk".match(this.position[sq1]) && "PNBRQK".match(this.position[sq2]))
   }
 
+
   isPromoting(from: number, to: number) {
-    let figure = this.position[from]
-    let r = SimpleGame.row(to)
-    return figure === 'P' && r === 7 || figure === 'p' && r === 0
+    return SimpleGame.isPromoting(from, to, this.game.position())
   }
 
   isEnPassant(from: number, to: number) {
-    let figureFrom = this.position[from]
-    let figureTo = this.position[to]
-    if (!"Pp".match(figureFrom)) return false
-    if (figureTo !== '0') return false
-    if (SimpleGame.col(from) === SimpleGame.col(to)) return false
-    return figureFrom === 'P' ? -8 : 8
+    return SimpleGame.isEnPassant(from, to, this.game.position())
   }
 
   @Method()
@@ -149,7 +141,6 @@ export class ChessBoard {
   @Method()
   getHeight() {
     if (!this.isMounted) return this.height = '40vw'
-    //return '40vw'
     let brd = document.getElementById(this.uuid)
     return brd['offsetWidth'] ? this.height = `${brd['offsetWidth']}px` : this.height = '40vw'
   }
@@ -175,86 +166,69 @@ export class ChessBoard {
   @Method()
   empty() {
     this.reset()
-    this.position = this.emptyFen
+    this.game.clear()
+    this.position = this.game.position()
+    this.positions = [this.game.position()]
   }
 
   @Method()
   reset() {
-    this.position = this.initialPosition
-    this.positions = [this.initialPosition]
+    this.game.reset()
+    this.position = this.game.position()
+    this.positions = [this.game.position()]
+    this.current = 0
     this.sqFrom = -1
     this.promotionSq = -1
-    this.turn = this.initialTurn
   }
 
   @Method()
   setSquare(sq: number, figure: string) {
-    let arr = this.position.split('')
-    arr[sq] = figure
-    this.position = arr.join('')
+    this.game.put(sq, figure)
+    this.position = this.game.position()
+    this.positions = this.game.positions()
   }
 
   @Method()
   move(from, to, promotion: string) {
-    if (this.position !== this.positions[this.positions.length - 1]) return
-    if (typeof to === 'string') to = SimpleGame.san2sq(to)
-    if (typeof from === 'string') from = SimpleGame.san2sq(from)
-    let figure = promotion ? promotion : this.position[from]
-    if (this.isWhiteFigure(figure) && this.turn === 'b' || 
-        this.isBlackFigure(figure) && this.turn === 'w') {
-      if (this.boardMode !== 'MODE_SETUP') return
+    if (this.boardMode == 'MODE_SETUP') {
+      this.setSquare(to, promotion? promotion : this.position[from])
+      this.setSquare(from, '0')
+      return true
     }
-
-    let enPass = this.isEnPassant(from, to)
-    
-
-    this.setSquare(to, figure)
-    this.setSquare(from, '0')
-
-    if (enPass) {
-      this.setSquare(to + enPass, '0')
+    let retVal = this.game.move(from, to, promotion)
+    if (!retVal) {
+      this.sqFrom = -1
+      return false
     }
-
-    if (figure === 'K' && from === 4 && to === 6) {
-      this.setSquare(7, '0')
-      this.setSquare(5, 'R')
-    }
-    if (figure === 'K' && from === 4 && to === 2) {
-      this.setSquare(0, '0')
-      this.setSquare(3, 'R')
-    }
-    if (figure === 'k' && from === 60 && to === 62) {
-      this.setSquare(63, '0')
-      this.setSquare(61, 'r')
-    }
-    if (figure === 'k' && from === 60 && to === 58) {
-      this.setSquare(56, '0')
-      this.setSquare(59, 'r')
-    }
-    if (this.boardMode !== 'MODE_SETUP') {
-      this.positions = [...this.positions, this.position]
-      this.turn = this.turn === 'w' ? 'b' : 'w'
-    } else {
-      this.positions = [this.position]
-    }
+    this.position = this.game.position()
+    this.positions = this.game.positions()
+    this.current = this.game.positions().length - 1
     this.newMove.emit({from: from, to: to, promotion: promotion})
+    return true
+  }
+
+  @Method()
+  remoteMove(...args) {
+    if (this.boardMode === 'MODE_SETUP') return false
+    return this.move.apply(this, args)
   }
 
   @Method()
   goto(n: number) {
     if (n < 0) n = 0
     if (n >= this.positions.length) n = this.positions.length - 1
+    this.current = n
     this.position = this.positions[n]
   }
 
   getPromotionFigures() {
     if (this.sqFrom === -1) return []
-    return this.isWhiteFigure(this.position[this.sqFrom]) ? "QRNB".split('') : "qrnb".split('')
+    return SimpleGame.isWhiteFigure(this.position[this.sqFrom]) ? "QRNB".split('') : "qrnb".split('')
   }
 
   isTurnConflict(figure: string) {
-    return this.turn === 'w' && this.isBlackFigure(figure) ||
-           this.turn === 'b' && this.isWhiteFigure(figure)
+    return this.game.fenObj().turn === 'w' && SimpleGame.isBlackFigure(figure) ||
+           this.game.fenObj().turn === 'b' && SimpleGame.isWhiteFigure(figure)
   }
 
   onSqClick(sq: number, _: UIEvent) {
@@ -304,7 +278,6 @@ export class ChessBoard {
       }
 
       this.setSquare(sq, fig)
-      this.positions = [this.position]
       this.sqFrom = -1
       return
     }
@@ -328,7 +301,7 @@ export class ChessBoard {
         this.move(this.sqFrom, sq, null)
         this.sqFrom = -1 } else {
           if (!!this.autoPromotion) {
-            this.move(this.sqFrom, sq, this.isBlackFigure(figure) ? 
+            this.move(this.sqFrom, sq, SimpleGame.isBlackFigure(figure) ? 
                                          this.autoPromotion.toLowerCase() :
                                         this.autoPromotion.toUpperCase())
             return this.sqFrom = -1
@@ -369,7 +342,8 @@ export class ChessBoard {
   setup() {
     console.log("Entering setup mode")
     this.boardMode = this.modes['MODE_SETUP']
-    this.positions = [this.position]
+    this.game.reset(this.game.fen())
+    this.positions = this.game.positions()
   }
 
   @Method()
@@ -382,13 +356,12 @@ export class ChessBoard {
   getLength() {return this.positions.length}
 
   @Method()
-  getTurn() {return this.turn}
+  getTurn() {return this.game.fenObj().turn}
 
   @Method()
   togglePanel() {
     this.rightPanel = !this.rightPanel
   }
-
 
   getRows() {
     const getImage = (n) => {
@@ -520,16 +493,16 @@ export class ChessBoard {
             name="turn" 
             type="radio" 
             value="w"
-            checked={this.turn === 'w'}
-            onChange={(ev: UIEvent) => this.turn = ev.target['value']} 
+            checked={this.game.fenObj().turn === 'w'}
+            onChange={(ev: UIEvent) => this.game.fenObj().turn = ev.target['value']} 
           />
           <label>White</label>
           <input 
             name="turn" 
             type="radio" 
             value="b" 
-            checked={this.turn === 'b'} 
-            onChange={(ev: UIEvent) => this.turn = ev.target['value']} 
+            checked={this.game.fenObj().turn === 'b'} 
+            onChange={(ev: UIEvent) => this.game.fenObj().turn = ev.target['value']} 
           />
           <label>Black</label>
         </div>
@@ -548,18 +521,84 @@ export class ChessBoard {
   }
 
   getNotation() {
-    return (
-      <p>Game annotation</p>
-    )
+    return ([
+      <div class="notation-row" id={`${this.uuid}-notation`}>
+        <div style={{color: this.darkBg, fontWeight: 'bold'}}>
+          White
+        </div>
+        <div>{this.game.whitePlayer}</div>
+      </div>,
+      <div class="notation-row">
+        <div style={{color: this.darkBg, fontWeight: 'bold'}}>
+          Black
+        </div>
+        <div>{this.game.blackPlayer}</div>
+    </div>,
+    <div class="notation-row">
+      <div style={{color: this.darkBg, fontWeight: 'bold'}}>
+        Date
+      </div>
+      <div>{this.game.date}</div>
+    </div>,
+    <div class="notation-row">
+      <div style={{color: this.darkBg, fontWeight: 'bold'}}>
+        Result
+      </div>
+      <div>{this.game.result}</div>
+    </div>,
+    <div>&nbsp;</div>,
+    <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          flexWrap: 'wrap'
+        }}
+      >
+      {[
+        <div
+          key={0}
+          style={{
+            background: 0 === this.current ? this.lightBg : 'inherit', 
+            paddingRight: '0.5rem',
+            paddingLeft: '0.5rem',
+            cursor: 'pointer',
+            border: 'dotted 1px'
+          }}
+          onClick={() => this.goto(0)}
+        >
+          &nbsp;
+        </div>, 
+        this.game.sanObjs().slice(1).map((m, i) => {
+          return (
+            <div 
+              key={i + 1}
+              style={{
+                background: (i + 1) === this.current ? this.lightBg : 'inherit',
+                paddingRight: '0.5rem',
+                paddingLeft: '0.5rem',
+                cursor: 'pointer'
+              }}
+              onClick={() => this.goto(i + 1)}
+            >
+              {
+                [this.game.fenObjs()[i].turn === 'w' ? `${this.game.fenObjs()[i].fullMoveNumber}. ` : 
+                 i === 0 ? `${this.game.fenObjs()[i].fullMoveNumber}. ... ` : '',
+                 m]
+              }
+            </div>
+          )
+        })
+      ]}  
+    </div>
+   ])
   }
 
   getPromotionPanel() {
     let coords = this.getCoords()
     return (
           <div class="promotion-panel"
-                style={{display: this.promotionSq === -1 ? 'none' : 'flex',
-                  flexDirection: 'row',
-                  position: 'absolute',
+                style={{
+                  display: this.promotionSq === -1 ? 'none' : 'flex',
                   left: `${Math.floor(coords['left'] + 
                         (SimpleGame.col(this.promotionSq) ^ (this.flipped ? 7 : 0)) * 
                         (parseInt(this.height) / 8))}px`,
@@ -569,8 +608,7 @@ export class ChessBoard {
                   width: `${parseInt(this.height) / 2}px`, 
                   height: `${parseInt(this.height) / 8}px`, 
                   background: SimpleGame.lightSq(this.promotionSq) ? this.lightBg : this.darkBg,
-                  border: 'solid 2px',
-                  zOrder: '1000'}}
+                }}
         >
         { 
           this.getPromotionFigures().map(
@@ -612,6 +650,7 @@ export class ChessBoard {
           class="board"
           id={this.uuid}
           style={{
+            width: window.innerHeight > window.innerWidth ? '100%' : '65%',
             height: this.height,
           }}
         >
@@ -621,7 +660,8 @@ export class ChessBoard {
           class="lateral-panel"
           style={{
             display: this.rightPanel ? 'flex' : 'none', 
-            height: this.height
+            height: this.height,
+            width: window.innerHeight > window.innerWidth ? '100%' : '35%'
           }}
           onDragEnter={(ev: UIEvent) => ev.preventDefault()} 
           onDragOver={(ev: UIEvent) => ev.preventDefault()}
@@ -640,7 +680,8 @@ export class ChessBoard {
             <div 
               class="setup"
               style={{
-                display: this.boardMode === 'MODE_SETUP' ? 'flex' : 'none'
+                display: this.boardMode === 'MODE_SETUP' ? 'flex' : 'none',
+                background: this.lightBg
               }}
             >
               {this.getSetup()}
