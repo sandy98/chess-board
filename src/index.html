@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0">
   <title>Chess Board Web Component</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
   <script src="/build/chessboard.js"></script>
   <style>
     .up-and-down {
@@ -99,10 +101,10 @@
               <button onclick="goto(1000)">&gt;&gt;</button>
             </div>
             <div class="up-and-down">
-              <button onclick="document.querySelector('chess-board').reset()">Reset Board</button>
+              <!--<button onclick="document.querySelector('chess-board').reset()">Reset Board</button>
               &nbsp;&nbsp;&nbsp;
               <button onclick="document.querySelector('chess-board').empty()">Empty Board</button>
-              &nbsp;&nbsp;&nbsp;
+              &nbsp;&nbsp;&nbsp;-->
               <button onclick="document.querySelector('chess-board').setup()">Setup Board</button>
             </div>
           </div>      
@@ -201,6 +203,10 @@
         currPos = board.getLength() -1
       })
 
+      document.addEventListener('changeCurrent', (ev) => {
+        console.log('changeCurrent event: ' + ev.detail)
+        currPos = ev.detail
+      }) 
       
     }
 

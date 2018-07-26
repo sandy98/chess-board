@@ -1,6 +1,6 @@
 {
   "name": "chess-board",
-  "version": "0.1.0",
+  "version": "0.9.9",
   "description": "Chess Board Web Component",
   "module": "dist/esm/index.js",
   "main": "dist/index.js",

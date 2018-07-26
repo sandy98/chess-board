@@ -30,11 +30,13 @@ declare global {
 
   namespace StencilComponents {
     interface ChessBoard {
+      'analyze': () => void;
       'autoPromotion': string;
       'chessSet': string;
       'darkBg': string;
       'empty': () => void;
       'emptyPos': string;
+      'figurines': object;
       'flip': () => void;
       'forceUpdate': () => void;
       'game': any;
@@ -52,6 +54,7 @@ declare global {
       'lightBg': string;
       'modes': object;
       'move': (from: any, to: any, promotion: string) => boolean;
+      'play': () => void;
       'remoteMove': (...args: any[]) => any;
       'reset': () => void;
       'rightPanel': boolean;
@@ -64,9 +67,11 @@ declare global {
       'setSquare': (sq: number, figure: string) => void;
       'sets': object;
       'setup': () => void;
+      'takeBack': () => any;
       'togglePanel': () => void;
       'uuid': string;
       'version': string;
+      'view': () => void;
     }
   }
 
@@ -93,12 +98,14 @@ declare global {
       'chessSet'?: string;
       'darkBg'?: string;
       'emptyPos'?: string;
+      'figurines'?: object;
       'game'?: any;
       'greeting'?: string;
       'initialMode'?: string;
       'initialPosition'?: string;
       'lightBg'?: string;
       'modes'?: object;
+      'onChangeCurrent'?: (event: CustomEvent) => void;
       'onNewMove'?: (event: CustomEvent) => void;
       'rightPanel'?: boolean;
       'schemas'?: object;

@@ -2,7 +2,7 @@ import { Component, Prop, State, Method, Listen, Watch, Event, EventEmitter} fro
 import chessSets  from 'chess-sets'
 import SimpleGame from './simple-game'
 
-const version = '0.1.0'
+const version = '0.9.9'
 
 const v4 = () => Math.round(new Date().getTime()).toString(16)
 
@@ -14,6 +14,7 @@ const v4 = () => Math.round(new Date().getTime()).toString(16)
 export class ChessBoard {
 
   @Event() newMove: EventEmitter
+  @Event() changeCurrent: EventEmitter
 
   @Prop() version: string = version
   @Prop() uuid: string = v4()
@@ -50,6 +51,21 @@ export class ChessBoard {
     MODE_PLAY: 'MODE_PLAY'
   }
 
+  @Prop() figurines: object = {
+    p: {codePoint: '0x265f',	html: '&#9823;'},
+    n: {codePoint: '0x265e',	html: '&#9822;'},
+    b: {codePoint: '0x265d',	html: '&#9821;'},
+    r: {codePoint: '0x265c',	html: '&#9820;'},
+    q: {codePoint: '0x265b',	html: '&#9819;'},
+    k: {codePoint: '0x265a',	html: '&#9818;'},
+    P: {codePoint: '0x2659',	html: '&#9817;'},
+    N: {codePoint: '0x2658',	html: '&#9816;'},
+    B: {codePoint: '0x2657',	html: '&#9815;'},
+    R: {codePoint: '0x2656',	html: '&#9814;'},
+    Q: {codePoint: '0x2655',	html: '&#9813;'},
+    K: {codePoint: '0x2654',	html: '&#9812;'}
+  }
+
   @Prop() initialMode: string = this.modes['MODE_PLAY']
     
   @State() boardMode: string = this.initialMode
@@ -79,6 +95,13 @@ export class ChessBoard {
     console.log(SimpleGame.fen2obj(SimpleGame.defaultFen()))
   }
 
+  /*
+  @Listen('changeCurrent')
+  chCurHandler(ev: CustomEvent) {
+    console.log('Board changeCurrent handler: ' + ev.detail)
+  }
+  */
+
   @Listen('newMove')
   moveHandler(event: CustomEvent) {
     //console.log('Received the custom move event: ', event.detail);
@@ -87,7 +110,8 @@ export class ChessBoard {
     let notation = document.getElementById(`${this.uuid}-notation`)
     if (notation) {
       console.log("ScrollTop: " + notation.scrollTop + " - ScrollHeight: " + notation.scrollHeight)
-      notation.scrollTop = notation.scrollHeight
+      //notation.scrollTop = notation.scrollHeight
+      notation.scrollTop = 1000
     }
     else {
       console.log("Couldn't scroll element " + `${this.uuid}-notation`)
@@ -208,6 +232,18 @@ export class ChessBoard {
   }
 
   @Method()
+  takeBack() {
+    if (this.boardMode !== 'MODE_ANALYSIS') return false;
+    let ret = this.game.undo()
+    if (ret) {
+      this.positions = this.game.positions()
+      this.position = this.game.position()
+      this.current = this.positions.length - 1
+    }
+    return ret
+  } 
+
+  @Method()
   remoteMove(...args) {
     if (this.boardMode === 'MODE_SETUP') return false
     return this.move.apply(this, args)
@@ -219,6 +255,7 @@ export class ChessBoard {
     if (n >= this.positions.length) n = this.positions.length - 1
     this.current = n
     this.position = this.positions[n]
+    this.changeCurrent.emit(this.current)
   }
 
   getPromotionFigures() {
@@ -231,7 +268,11 @@ export class ChessBoard {
            this.game.fenObj().turn === 'b' && SimpleGame.isWhiteFigure(figure)
   }
 
-  onSqClick(sq: number, _: UIEvent) {
+  onSqClick(sq: number, ev: UIEvent) {
+    if (this.boardMode === 'MODE_VIEW') {
+      ev.preventDefault()
+      return false
+    }
     if (this.boardMode === 'MODE_SETUP' && this.sqFrom < -1) {
       let fig = '0'
       switch (this.sqFrom) {
@@ -282,7 +323,7 @@ export class ChessBoard {
       return
     }
     if (this.sqFrom === -1) {
-      if (this.position[sq] !== '0') {
+      if (this.position[sq] !== '0' && !this.isTurnConflict(this.position[sq])) {
         this.sqFrom = sq 
       }
     } else if (sq === this.sqFrom) {
@@ -299,7 +340,8 @@ export class ChessBoard {
       }
       if (!this.isPromoting(this.sqFrom, sq)) { 
         this.move(this.sqFrom, sq, null)
-        this.sqFrom = -1 } else {
+        this.sqFrom = -1 
+      } else {
           if (!!this.autoPromotion) {
             this.move(this.sqFrom, sq, SimpleGame.isBlackFigure(figure) ? 
                                          this.autoPromotion.toLowerCase() :
@@ -328,9 +370,15 @@ export class ChessBoard {
     this.onSqClick(sq,ev)
   }
 
-  onDragFigure(sq) {
+  onDragFigure(sq: number, ev: UIEvent) {
+  
+    if (this.boardMode == 'MODE_VIEW' || this.isTurnConflict(this.position[sq])) {
+      ev.preventDefault()
+      return false
+    }
     this.isDragging = true
     this.sqFrom = sq
+    return true
   }
 
   @Method()
@@ -344,6 +392,24 @@ export class ChessBoard {
     this.boardMode = this.modes['MODE_SETUP']
     this.game.reset(this.game.fen())
     this.positions = this.game.positions()
+  }
+
+  @Method()
+  view() {
+    console.log("Entering view mode")
+    this.boardMode = this.modes['MODE_VIEW']
+  }
+
+  @Method()
+  play() {
+    console.log("Entering play mode")
+    this.boardMode = this.modes['MODE_PLAY']
+  }
+
+  @Method()
+  analyze() {
+    console.log("Entering analyze mode")
+    this.boardMode = this.modes['MODE_ANALYSIS']
   }
 
   @Method()
@@ -374,7 +440,7 @@ export class ChessBoard {
                   cursor: 'pointer',
                   opacity: n === this.sqFrom && this.isDragging ? '0' : '1' 
                   }}
-                onDragStart={() => this.onDragFigure(n)}
+                onDragStart={(ev: UIEvent) => this.onDragFigure(n, ev)}
                 onDragEnd={() => this.isDragging = false}
                 onDblClick={(ev: UIEvent) => {ev.preventDefault(); ev.cancelBubble = true}}
               />)
@@ -521,18 +587,50 @@ export class ChessBoard {
   }
 
   getNotation() {
+    let getSanHtml = (san, i) => {
+       let number = this.game.fenObjs()[i].turn === 'w' ? `${this.game.fenObjs()[i].fullMoveNumber}. ` : 
+         i === 0 ? `${this.game.fenObjs()[i].fullMoveNumber}. ... ` : ''
+       let ma = san.match(/[NBRQK]/)
+       if (!ma) {
+         return `<span>${number}</span><span>${san}</span>`
+       }
+       let rf = this.game.fenObjs()[i].turn === 'w' ? ma[0] : ma[0].toLowerCase()
+       /*
+       if (ma.index === 0) {
+         return `<span>${number}</span>
+                 <span style="font-size: 2rem;">${this.figurines[rf].html}</span>
+                 <span>${san.slice(1)}</span>`
+       } else {
+        return `<span>${number}</span>
+                <span>${san.slice(0, ma.index).replace('=', '')}</span>
+                <span style="font-size: 2rem;">${this.figurines[rf].html}</span>
+                <span>${san.slice(ma.index + 1, san.length)}<span>`
+       }
+       */
+       if (ma.index === 0) {
+        return `<span>${number}</span>
+                <span><img style="height: 1.5rem; width: 1.5rem;" src="${this.sets['default'][rf]}" /></span>
+                <span>${san.slice(1)}</span>`
+      } else {
+       return `<span>${number}</span>
+               <span>${san.slice(0, ma.index).replace('=', '')}</span>
+               <span><img style="height: 1.5rem; width: 1.5rem;" src="${this.sets['default'][rf]}" /></span>
+               <span>${san.slice(ma.index + 1, san.length)}<span>`
+      }
+   }
+
     return ([
       <div class="notation-row" id={`${this.uuid}-notation`}>
         <div style={{color: this.darkBg, fontWeight: 'bold'}}>
           White
         </div>
-        <div>{this.game.whitePlayer}</div>
+        <div>{this.game.getWhite()}</div>
       </div>,
       <div class="notation-row">
         <div style={{color: this.darkBg, fontWeight: 'bold'}}>
           Black
         </div>
-        <div>{this.game.blackPlayer}</div>
+        <div>{this.game.getBlack()}</div>
     </div>,
     <div class="notation-row">
       <div style={{color: this.darkBg, fontWeight: 'bold'}}>
@@ -567,24 +665,27 @@ export class ChessBoard {
           onClick={() => this.goto(0)}
         >
           &nbsp;
-        </div>, 
-        this.game.sanObjs().slice(1).map((m, i) => {
+        </div>,
+        <br/>, 
+        this.game.history().slice(1).map((m, i) => {
           return (
             <div 
               key={i + 1}
               style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
                 background: (i + 1) === this.current ? this.lightBg : 'inherit',
                 paddingRight: '0.5rem',
                 paddingLeft: '0.5rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontSize: '1rem',
+                height: '2rem',
+                minHeight: '2rem'
               }}
               onClick={() => this.goto(i + 1)}
+              innerHTML={getSanHtml(m, i)}
             >
-              {
-                [this.game.fenObjs()[i].turn === 'w' ? `${this.game.fenObjs()[i].fullMoveNumber}. ` : 
-                 i === 0 ? `${this.game.fenObjs()[i].fullMoveNumber}. ... ` : '',
-                 m]
-              }
             </div>
           )
         })

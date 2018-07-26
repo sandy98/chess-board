@@ -148,13 +148,10 @@ export default class SimpleGame {
         return this.fens.map((fo) => fo.position)
     }
 
-    sanObjs(){
+    history(){
         return this.sans
     }
-    reset(fenString = this.initialFen) {
-        this.fens = [SimpleGame.fen2obj(fenString)]
-        this.sans = [' ']
-    }
+
     put(sq, figure, destFen) {
         if (typeof sq === 'string') sq = SimpleGame.san2sq(sq)
         if (sq < 0 || sq > 63) return false
@@ -178,6 +175,20 @@ export default class SimpleGame {
         }
         return true
     }
+    
+    reset(fenString = this.initialFen) {
+        this.fens = [SimpleGame.fen2obj(fenString)]
+        this.sans = [' ']
+    }
+
+    undo() {
+        console.log('fens length = ' + this.fens.length)
+        if (this.fens.length < 2) return false
+        this.fens.pop()
+        this.sans.pop()
+        return true
+    }
+
     cloneFen(n) {
       if (n < 0 || n >= this.fens.length) return false
       let destFen = {}
@@ -195,6 +206,9 @@ export default class SimpleGame {
     set(property, value) {
         this[property] = value
     }
+    
+    getWhite() {return this.whitePlayer}
+    getBlack() {return this.blackPlayer}
 
     move(from, to, promotion) {
         if (typeof to === 'string') to = SimpleGame.san2sq(to)
@@ -288,7 +302,7 @@ export default class SimpleGame {
                 return 'O-O-O'
             }
             let capture = destFigure !== '0' || !!enPass ? 'x' : ''
-            let figure = origFigure.match(/[Pp]/) ? !!capture ? SimpleGame.sq2san(from)[0] : '' : origFigure
+            let figure = origFigure.match(/[Pp]/) ? !!capture ? SimpleGame.sq2san(from)[0] : '' : origFigure.toUpperCase()
             let dest = SimpleGame.sq2san(to)
             let prom = promotion ? `=${promotion.toUpperCase()}` : ''
             return `${figure}${capture}${dest}${prom}`
