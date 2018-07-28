@@ -63,7 +63,7 @@ export default class SimpleGame {
     }
 
     static emptyFen() {
-        return `8/8/8/8/8/8/8/8 w KQkq - 1 0`
+        return `8/8/8/8/8/8/8/8 w - - 1 0`
     }
 
     static isWhiteFigure(f) {
@@ -151,6 +151,12 @@ export default class SimpleGame {
     history(){
         return this.sans
     }
+    
+    setCastling(newCastling) {
+        let fen = this.fens[this.fens.length - 1]
+        fen.castling = newCastling
+        return true
+    }
 
     put(sq, figure, destFen) {
         if (typeof sq === 'string') sq = SimpleGame.san2sq(sq)
@@ -209,6 +215,24 @@ export default class SimpleGame {
     
     getWhite() {return this.whitePlayer}
     getBlack() {return this.blackPlayer}
+
+    ascii(flipBoard = false) {
+        let dottedPos = this.position().replace(/0/g, '.')
+        let header = '   +------------------------+'
+        let blank =  ' '.repeat(header.length)
+        let footer= '     a  b  c  d  e  f  g  h'
+        let rows = []
+        for (let y = 0; y < 8; y++) {
+            let r = ` ${8 - y} |`
+            for (let x = 0; x < 8; x++) {
+                r += ` ${dottedPos[(y * 8 + x) ^ (flipBoard ? 7 : 56)]} `
+            }
+            r += '|'
+            rows.push([r, blank].join('\n'))
+        }
+        return [header, blank, ...rows, header, blank, footer].join('\n')
+    }
+
 
     move(from, to, promotion) {
         if (typeof to === 'string') to = SimpleGame.san2sq(to)

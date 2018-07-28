@@ -18,7 +18,7 @@
     justify-content:flex-start;
     align-items: stretch;
     border: none;
-    padding: 0.5 rem;
+    padding: 0.5 em;
 }
 
 .setup-or-form {
@@ -29,9 +29,9 @@
 }
 
 .chess-form {
-    height: 90%;
-    min-height: 90%;
-    max-height: 90%;
+    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
     flex-direction: column;
     justify-content: flex-start;
     align-items: space-around;
@@ -58,10 +58,13 @@
 }
 
 .board-setup {
-  height: 90%;
-  min-height: 90%;
-  max-height: 90%;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
   flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  
 }
 
 .external-contents {

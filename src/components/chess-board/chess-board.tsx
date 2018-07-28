@@ -22,6 +22,7 @@ export class ChessBoard {
 
   @Prop({mutable: true}) game: any = new SimpleGame()
   @Prop() initialPosition: string = this.game.position()
+  @Prop({mutable: true}) canMove: string = 'wb'
   @Prop() emptyPos: string = `${"0".repeat(64)}`
   @Prop({mutable: true}) chessSet: string = "default"
   @Prop() sets: object = chessSets
@@ -264,8 +265,15 @@ export class ChessBoard {
   }
 
   isTurnConflict(figure: string) {
-    return this.game.fenObj().turn === 'w' && SimpleGame.isBlackFigure(figure) ||
-           this.game.fenObj().turn === 'b' && SimpleGame.isWhiteFigure(figure)
+    return (this.game.fenObj().turn === 'w' && SimpleGame.isBlackFigure(figure) ||
+           this.game.fenObj().turn === 'b' && SimpleGame.isWhiteFigure(figure)) &&
+           this.boardMode !== 'MODE_SETUP'
+  }
+
+  isCanMoveConflict(figure: string) {
+    return (!this.canMove.match(/b/) && SimpleGame.isBlackFigure(figure) ||
+           !this.canMove.match(/w/) && SimpleGame.isWhiteFigure(figure)) &&
+           this.boardMode !== 'MODE_SETUP' && this.boardMode !== 'MODE_ANALYSIS'
   }
 
   onSqClick(sq: number, ev: UIEvent) {
@@ -323,7 +331,9 @@ export class ChessBoard {
       return
     }
     if (this.sqFrom === -1) {
-      if (this.position[sq] !== '0' && !this.isTurnConflict(this.position[sq])) {
+      if (this.position[sq] !== '0' && 
+          (!this.isTurnConflict(this.position[sq]) || this.boardMode == 'MODE_PLAY') && 
+          !this.isCanMoveConflict(this.position[sq])) {
         this.sqFrom = sq 
       }
     } else if (sq === this.sqFrom) {
@@ -372,7 +382,9 @@ export class ChessBoard {
 
   onDragFigure(sq: number, ev: UIEvent) {
   
-    if (this.boardMode == 'MODE_VIEW' || this.isTurnConflict(this.position[sq])) {
+    if (this.boardMode === 'MODE_VIEW' || 
+        (this.isTurnConflict(this.position[sq]) && this.boardMode !== 'MODE_PLAY') || 
+        this.isCanMoveConflict(this.position[sq])) {
       ev.preventDefault()
       return false
     }
@@ -489,28 +501,76 @@ export class ChessBoard {
   }
 
   getSetup() {
+    const onClickPermissions = (fig: string, ev: UIEvent)  => {
+      let castling = this.game.fenObj().castling
+      if (castling.match(fig)) {
+        castling = castling.replace(fig, '')
+        if (!castling) castling = '-'
+        ev.target['style']['background'] = this.lightBg
+      } else {
+        if (castling === '-') {
+          castling = fig
+        } else {
+          switch(fig) {
+            case 'K':
+              castling = `${fig}${castling}`
+              break
+            case 'Q':
+              if (castling.match('K')) {
+                castling = `KQ${castling.slice(1)}`
+              } else {
+                castling = `Q${castling}`
+              }
+              break
+            case 'k':
+              let revCas = castling.split('').reverse().join('')
+              if (revCas.match('q')) {
+                revCas = `qk${revCas.slice(1)}`
+              } else {
+                revCas = `k${revCas}`
+              }
+              castling = revCas.split('').reverse().join('')
+              break
+            case 'q':
+              castling = `${castling}${fig}`
+              break
+            default:
+              castling = '-'
+          }
+        }
+        ev.target['style']['background'] = this.darkBg
+      }
+      this.game.setCastling(castling)
+      console.log(castling)
+    }
+
     return (
       <div 
       class="board-setup"
       style={{
-              display: this.boardMode === 'MODE_SETUP' ? 'flex' : 'none', background: this.lightBg
+              display: this.boardMode === 'MODE_SETUP' ? 'flex' : 'none', 
+              background: this.lightBg
             }}
      >
       <div style={{display: 'flex', flexDirection: 'row'}}>
+        <label style={{border: 'solid 1px silver', borderBottom: 'none'}}>Black Figures</label>
         {
           "pnbrqk".split('').map((fig, i) => {
             return (
-              <div key={i} style={{width: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
+              <div key={i} 
+                   style={{
+                          width: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
                           height: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
                           background: this.lightBg, 
                           border: 'solid 1px silver', 
                           display: 'flex', 
                           justifyContent: 'center', 
-                          alignItems: 'center'}}
+                          alignItems: 'center'
+                         }}
               >
               <img 
                 src={this.sets[this.chessSet][fig]}
-                style={{width: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%', 
+                style={{cursor: 'pointer', width: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%', 
                 height: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%'}}
                 onDragStart={() => {
                   this.sqFrom = -2 - (i + 0)
@@ -525,20 +585,24 @@ export class ChessBoard {
         }
       </div>
       <div style={{display: 'flex', flexDirection: 'row'}}>
+        <label style={{border: 'solid 1px silver'}}>White Figures</label>
         {
           "PNBRQK".split('').map((fig, i) => {
             return (
-              <div key={i + 6} style={{width: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
+              <div key={i + 6} 
+                   style={{
+                          width: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
                           height: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
                           background: this.lightBg, 
                           border: 'solid 1px silver', 
                           display: 'flex', 
                           justifyContent: 'center', 
-                          alignItems: 'center'}}
+                          alignItems: 'center'
+                         }}
               >
               <img 
                 src={this.sets[this.chessSet][fig]}
-                style={{width: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%', 
+                style={{cursor: 'pointer', width: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%', 
                 height: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%'}}
                 onDragStart={() => {
                   this.sqFrom = -2 - (i + 6)
@@ -551,8 +615,41 @@ export class ChessBoard {
             )
           })
         }
+      </div>
+      <div style={{margin: '1em', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+          <label style={{border: 'solid 1px silver'}}>Castling</label>
+          {
+            "KQkq".split('').map((fig) => {
+              return (
+                <div key={fig} 
+                     style={{
+                            width: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
+                            height: `${Math.round(parseInt(this.height) / 8 * 0.66)}px`, 
+                            background: this.game.fenObj().castling.match(fig) ? this.darkBg : this.lightBg,
+                            border: 'solid 1px silver', 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center'
+                           }}
+                     onClick={(ev: UIEvent) => {
+                       onClickPermissions(fig, ev)
+                     }}
+                        >
+                <img 
+                  src={this.sets[this.chessSet][fig]}
+                  style={{width: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%', 
+                  height: this.chessSet === 'alt1' || this.chessSet === 'default' ? '100%' : '80%'}}
+                  onDragStart={(ev: UIEvent) => {
+                    ev.preventDefault()
+                    ev.cancelBubble = true
+                    return false
+                  }}
+                />
+                </div>
+              )
+            })
+          }
         </div>
-
         <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly', marginTop: '0.5rem'}}>
           <label>Turn to play: </label>
           <input 
@@ -751,7 +848,9 @@ export class ChessBoard {
           class="board"
           id={this.uuid}
           style={{
-            width: window.innerHeight > window.innerWidth ? '100%' : '65%',
+            width: window.innerHeight > window.innerWidth ? '100%' : '60%',
+            minWidth: window.innerHeight > window.innerWidth ? '100%' : '60%',
+            maxWidth: window.innerHeight > window.innerWidth ? '100%' : '60%',
             height: this.height,
           }}
         >
@@ -762,7 +861,9 @@ export class ChessBoard {
           style={{
             display: this.rightPanel ? 'flex' : 'none', 
             height: this.height,
-            width: window.innerHeight > window.innerWidth ? '100%' : '35%'
+            width: window.innerHeight > window.innerWidth ? '100%' : '40%',
+            minWidth: window.innerHeight > window.innerWidth ? '100%' : '40%',
+            maxWidth: window.innerHeight > window.innerWidth ? '100%' : '40%'
           }}
           onDragEnter={(ev: UIEvent) => ev.preventDefault()} 
           onDragOver={(ev: UIEvent) => ev.preventDefault()}

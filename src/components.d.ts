@@ -32,6 +32,7 @@ declare global {
     interface ChessBoard {
       'analyze': () => void;
       'autoPromotion': string;
+      'canMove': string;
       'chessSet': string;
       'darkBg': string;
       'empty': () => void;
@@ -95,6 +96,7 @@ declare global {
   namespace JSXElements {
     export interface ChessBoardAttributes extends HTMLAttributes {
       'autoPromotion'?: string;
+      'canMove'?: string;
       'chessSet'?: string;
       'darkBg'?: string;
       'emptyPos'?: string;

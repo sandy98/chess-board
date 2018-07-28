@@ -20,12 +20,12 @@
   </style>
 </head>
 <body>
-  <div
+  <div id="parent-div"
     style="display: flex; 
            padding: 1rem; 
            flex-direction: row; 
-           justify-content: space-between; 
-           align-items: flex-start; 
+           justify-content: space-evenly; 
+           align-items: center; 
            border: solid 1px; 
            margin-top: 30px; 
            border-radius: 0;
@@ -33,7 +33,7 @@
            min-height: 90%;
            max-height: 90%;"
   >
-    <div style="width: 60%;">
+    <div id="board-container" style="width: 60%; max-width: 60%; min-width: 60%;">
       <chess-board>
         <div slot="external-contents">
           <div style="margin-bottom: 0.5rem; 
@@ -111,9 +111,9 @@
          </div>
         </div>
       </chess-board>  
-  </div>
-  <div style="border: solid 1px transparent; margin-top: 0.5rem;">
-    <button onclick="board.togglePanel()">Toggle board panel</button>
+      <div style="border: solid 1px transparent; margin-top: 0.5rem;">
+        <button onclick="board.togglePanel()">Toggle board panel</button>
+      </div>
   </div>
   <script type="text/javascript">
     let currPos = 0
@@ -201,6 +201,14 @@
       document.addEventListener('newMove', (ev) => {
         console.log(`Received new move from chessboard: from = ${ev.detail.from}, to = ${ev.detail.to} originated in ${ev.target}`)
         currPos = board.getLength() -1
+      })
+      
+      window.addEventListener('resize', (ev) => {
+        let container = document.querySelector("#board-container");
+        container.style.width = window.innerHeight > window.innerWidth ? '100%' : '60%'
+        container.style.minWidth = window.innerHeight > window.innerWidth ? '100%' : '60%'
+        container.style.maxWidth = window.innerHeight > window.innerWidth ? '100%' : '60%'
+        document.querySelector('#parent-div').style.flexDirection = window.innerHeight > window.innerWidth ? 'column' : 'row'
       })
 
       document.addEventListener('changeCurrent', (ev) => {
