@@ -43,6 +43,7 @@ declare global {
       'getInitialFen': () => string;
       'getMaxPos': () => number;
       'getMode': () => string;
+      'getPGN': () => string;
       'getPos': (n?: number) => string;
       'getTurn': (n?: number) => string;
       'goto': (n: number) => void;

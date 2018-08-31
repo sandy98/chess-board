@@ -138,6 +138,8 @@ export class ChessBoard {
   @Method() getCurrent(): number {return this.current}
   @Method() getMode(): string {return this.boardMode}
 
+  @Method() getPGN(): string {return this.game['pgn']()}
+
   @Method()
   analyze() {this.boardMode = this.modes['MODE_ANALYSIS']}
 
@@ -406,8 +408,9 @@ export class ChessBoard {
         class="notation"
         style={{
           display: this.boardMode === 'MODE_SETUP' ? 'none' : 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-around',
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          // justifyContent: 'space-around',
           alignItems: 'center',
           backgroundColor: 'white',
           width: '100%',
@@ -418,12 +421,43 @@ export class ChessBoard {
           maxHeight: '100%',
           overflowX: 'hidden',
           overflowY: 'auto',
-          padding: '0'
+          padding: '0.5em',
       }}
       >
-       <custom-p style={{width: '90$'}}>
-         <h4>Notation</h4>
-       </custom-p>
+        <div
+          onClick={() => this.goto(0)}
+          style={{
+            border: 'solid 2px steelblue',
+            background: 0 === this.current ? this.lightBgColor : 'inherit',
+            cursor: 'pointer',
+            height: '1em',
+            width: '3em',
+            maxWidth: '3em',
+            minWidth: '3em'
+          }}
+        >
+        &nbsp;&nbsp;&nbsp;
+        </div>
+        {this.getPGN().split('  ').map(
+          (san, index) => {
+            return (
+              <div
+                key={index}
+                onClick={() => this.goto(index)}
+                style={{
+                  background: index === this.current ? this.lightBgColor : 'inherit',
+                  cursor: 'pointer',
+                  height: '1em',
+                  width: '3em',
+                  maxWidth: '3em',
+                  minWidth: '3em'
+                }}
+              >
+                {san}
+              </div>
+            )
+          }
+        )}
       </div>
     )
   }

@@ -336,7 +336,7 @@
             let ep: string = info.enPassant ? ' e.p.' : ''
             return `${prefix}${info.san}${ep}`
         })
-        .join(' ')
+        .join('  ')
         return resp
     }
   }
