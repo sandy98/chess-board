@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0">
+  <title>Chess Board Test</title>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+  <script src="/build/chessboard.js"></script>
+  <style>
+    
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color:ivory;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      font-family: monospace, Arial, Helvetica, sans-serif
+      font-size: 10pt;
+      padding: 0.5em;
+      font-weight: bold;
+      background-color: mintcream;
+      /*height: 100%;*/
+    }
+    .controls button, select {
+      font-size: 12pt;
+    }
+    .controls p {
+      display: flex;
+      flex-direction: row;
+      justify-content:space-between;
+      align-items: center;
+    }
+    .controls p.centered {
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="board-frame" style="width: 60%; margin: 1em 20% auto;">
+    <chess-board 
+      no-set="modern" 
+      no-initial-fen="rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1"
+      no-initial-mode="MODE_SETUP"
+    >
+      <div class="controls">
+        <p class="centered">
+          <button onclick="onShowVersion()">Show Version</button>
+        </p>
+        <p class="centered">
+          <button id="btnFlip" onclick="board.flip()">Flip Board</button>
+        </p>
+        <p class="centered">
+            <button id="btnSetup" onclick="board.setup()">Setup Board</button>
+        </p>
+        <p>
+          <label for="cboSets">Figures set</label>
+          <select id="cboSets"></select>
+        </p>
+        <p>
+          <label for="cboSchemas">Color schema</label>
+          <select id="cboSchemas"></select>
+        </p>
+        <p>
+          <label for="cboPositions">Position</label>
+          <select id="cboPositions">
+          </select>
+        </p>
+      </div>
+    </chess-board>
+  </div>
+  <div style="margin-top: 1em; text-align: center;">
+    <button 
+      style="border: solid 1px; border-radius: 10px;
+             box-shadow: 0px, 0px, 2px, 4px; 
+             cursor: pointer; 
+             background: rgb(214, 229, 235);
+             outline-style: none;
+             -webkit-tap-highlight-color: transparent;"
+      onclick="setTimeout(() => alert('Fly to web components sky with Stencil.js!!'), 0)"
+    >
+      <span 
+        style="display: flex; 
+               flex-flow: row nowrap; align-items: center; 
+               color: steelblue; padding: 5px; font-weight: bold;"
+      >
+        <i class="fas fa-dove fa-3x"></i>
+        &nbsp;&nbsp;Fly!
+      </span>
+    </button>
+  </div>
+  <script type="text/javascript">
+    const board = document.querySelector('chess-board')
+    let Game = null
+    const cboSs = document.querySelector('#cboSets')
+    const cboSchs = document.querySelector('#cboSchemas')
+    const cboPoss = document.querySelector('#cboPositions')
+
+    const onShowVersion = () => alert(`ChessBoard v. ${board.version}`)
+    const populateSets = () => {
+      let option
+      let sets = board.sets
+      for (let set in sets) {
+        let option = document.createElement('option')
+        option.value = set
+        option.innerHTML = `${set[0].toUpperCase()}${set.split('').slice(1).join('')}`
+        cboSs.appendChild(option)
+      }
+      cboSs.value = board.set
+    }
+    const populateSchemas = () => {
+      let option
+      let schemas = board.schemas
+      for (let schema in schemas) {
+        let option = document.createElement('option')
+        option.value = schema
+        option.innerHTML = `${schema[0].toUpperCase()}${schema.split('').slice(1).join('')}`
+        cboSchs.appendChild(option)
+      }
+      cboSchs.value = 'blue'
+    }
+    const populatePositions = () => {
+      let option
+      let values = [
+        'defaultFen', 
+        'emptyFen', 
+        'sicilianFen', 
+        'indiareyFen', 
+        'yugoslavFen', 
+        'berlinFen'
+      ]
+      let labels = [
+        'Default', 
+        'Empty', 
+        'Sicilian', 
+        'King\'s Indian', 
+        'Dragon - Yugoslav attack', 
+        'Ruy Lopez - Berlin'
+      ]
+      for (let i = 0; i < values.length; i++) {
+        let option = document.createElement('option')
+        option.value = values[i]
+        option.innerHTML = labels[i]
+        cboPoss.appendChild(option)
+      }
+      cboPoss.value = values[0]
+    }
+    const onChooseSet = (ev) => {
+      if (ev) ev.preventDefault()
+      console.log(`Chosen set is ${ev.target.value}`)
+      board.set = ev.target.value
+    }
+    const onChooseSchema = (ev) => {
+      if (ev) ev.preventDefault()
+      console.log(`Chosen schema is ${ev.target.value}`)
+      board.setSchema(ev.target.value)
+    }
+    const onResize = (ev) => {
+      if (ev) ev.preventDefault()
+      document.querySelector('#board-frame').style.width = window.innerWidth > window.innerHeight ?
+                                                           '60%' : '100%' 
+      document.querySelector('#board-frame').style.margin = window.innerWidth > window.innerHeight ?
+                                                            '1em 20% auto' : '1em 0 auto'
+      board.rerender()
+      console.log("Frame width: " + document.querySelector('#board-frame').style.width)
+    }
+    const preparePage = () => {
+      console.log('Initializing...')
+      Game = board.game ? board.game.constructor : null
+      populateSets()
+      populateSchemas()
+      populatePositions()
+      cboSs.onchange = onChooseSet
+      cboSchs.onchange = onChooseSchema
+      cboPoss.onchange = (ev) => board.resetGame(Game[ev.target.value]) 
+      window.onresize = onResize
+      window.onchangeorientation = onResize
+      document.addEventListener('flipEvent', (ev) => {
+        document.querySelector('#btnFlip').innerText = !!ev.detail === true ? "Unflip Board" : "Flip Board"
+      })
+      onResize()
+    }
+    
+    const onload = () => setTimeout(preparePage, 0)
+    document.body.onload = onload
+    // document.addEventListener('load', onload)
+  </script>
+</body>
+</html>

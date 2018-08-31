@@ -1,0 +1,45 @@
+{
+  "name": "chess-board",
+  "version": "0.1.0",
+  "description": "ChessBoard web component compiled by Stencil",
+  "module": "dist/esm/index.js",
+  "main": "dist/index.js",
+  "types": "dist/types/components.d.ts",
+  "collection": "dist/collection/collection-manifest.json",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "stencil build",
+    "start": "stencil build --dev --watch --serve",
+    "test": "jest",
+    "test.watch": "jest --watch"
+  },
+  "dependencies": {
+    "chess-sets": "^1.0.0"
+  },
+  "devDependencies": {
+    "@stencil/core": "^0.11.0",
+    "@types/jest": "^23.3.1",
+    "jest": "^23.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sandy98/chess-board.git"
+  },
+  "author": "Domingo E. Savoretti",
+  "license": "MIT",
+  "jest": {
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/@stencil/core/testing/jest.preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(tsx?|jsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "jsx"
+    ]
+  }
+}

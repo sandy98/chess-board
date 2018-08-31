@@ -1,0 +1,76 @@
+.main {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    color: steelblue;
+    background: slateblue;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    background: lightblue;
+    width: 60%;
+    max-width: 60%;
+    min-width: 60%;
+}
+
+.lateral-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    background: lightgoldenrodyellow;
+
+    width: 40%;
+    max-width: 40%;
+    min-width: 40%;
+
+    border-left: 'solid 1px';
+}
+
+.lateral-panel>div {
+    
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    
+    height: 50%;
+    min-height: 50%;
+    max-height: 50%;
+
+}
+
+.notation-or-setup {
+    background-color: lightskyblue;
+}
+
+.foreign-slot {
+    background-color: lightgray;
+    overflow-y: auto;
+    overflow-x: hidden; 
+}
+
+.notation{
+    background-color: whitesmoke;
+} 
+
+.setup{
+    background-color: silver;
+    align-items: stretch;
+} 
+
+.square, .figure {
+    
+    -webkit-user-select: none; /* Chrome/Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+    
+
+    -webkit-tap-highlight-color: transparent;
+    -moz-tap-highlight-color: transparent;
+    -ms-tap-highlight-color: transparent;
+    
+    outline-style: none;
+}
