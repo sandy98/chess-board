@@ -410,14 +410,14 @@ export class ChessBoard {
           display: this.boardMode === 'MODE_SETUP' ? 'none' : 'flex',
           flexDirection: 'row',
           flexWrap: 'wrap',
-          // justifyContent: 'space-around',
-          alignItems: 'center',
+          justifyContent: 'stretch',
+          alignItems: 'flex-start',
           backgroundColor: 'white',
           width: '100%',
           minWidth: '100%',
           maxWidth: '100%',
-          height: '100%',
-          minHeight: '100%',
+          height: '10%',
+          minHeight: '10%',
           maxHeight: '100%',
           overflowX: 'hidden',
           overflowY: 'auto',
@@ -436,7 +436,7 @@ export class ChessBoard {
             minWidth: '3em'
           }}
         >
-        &nbsp;&nbsp;&nbsp;
+        <span>&nbsp;</span>
         </div>
         {this.getPGN().split('  ').map(
           (san, index) => {
@@ -453,7 +453,7 @@ export class ChessBoard {
                   minWidth: '3em'
                 }}
               >
-                {san}
+                <span>{san}</span>
               </div>
             )
           }
@@ -779,7 +779,7 @@ export class ChessBoard {
           height: '50%',
           minHeight: '50%',
           maxHeight: '50%',
-          backgroundColor: 'lightskyblue'
+          backgroundColor: 'white'
         }}
       >
         {this.renderNotation()}
