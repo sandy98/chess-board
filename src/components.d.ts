@@ -41,6 +41,8 @@ declare global {
       'flip': () => void;
       'forceUpdate': () => void;
       'game': any;
+      'getCastling': () => string;
+      'getCastlingBg': (fig: string) => string;
       'getCoords': () => { left: number; top: number; };
       'getHeight': () => string;
       'getLength': () => number;
@@ -49,6 +51,7 @@ declare global {
       'getTurn': () => any;
       'goto': (n: number) => void;
       'greeting': string;
+      'initialCastling': string;
       'initialMode': string;
       'initialPosition': string;
       'isFlipped': () => boolean;
@@ -63,6 +66,7 @@ declare global {
       'selectSet': (newSet: string) => void;
       'selectedBg': string;
       'setBg': (light: any, dark: any) => void;
+      'setCastling': (castling: any) => any;
       'setGame': (g: any) => void;
       'setSchema': (n: number) => void;
       'setSquare': (sq: number, figure: string) => void;
@@ -70,6 +74,7 @@ declare global {
       'setup': () => void;
       'takeBack': () => any;
       'togglePanel': () => void;
+      'trashbin': string;
       'uuid': string;
       'version': string;
       'view': () => void;
@@ -103,6 +108,7 @@ declare global {
       'figurines'?: object;
       'game'?: any;
       'greeting'?: string;
+      'initialCastling'?: string;
       'initialMode'?: string;
       'initialPosition'?: string;
       'lightBg'?: string;
@@ -113,6 +119,7 @@ declare global {
       'schemas'?: object;
       'selectedBg'?: string;
       'sets'?: object;
+      'trashbin'?: string;
       'uuid'?: string;
       'version'?: string;
     }

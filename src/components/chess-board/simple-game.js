@@ -145,7 +145,7 @@ export default class SimpleGame {
     }
 
     positions() {
-        return this.fens.map((fo) => fo.position)
+        return this.fens.map((fenObj) => fenObj.position)
     }
 
     history(){
@@ -153,8 +153,7 @@ export default class SimpleGame {
     }
     
     setCastling(newCastling) {
-        let fen = this.fens[this.fens.length - 1]
-        fen.castling = newCastling
+        this.fens[this.fens.length - 1] = {...this.fens[this.fens.length - 1], castling: newCastling}
         return true
     }
 
