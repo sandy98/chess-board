@@ -19,6 +19,7 @@
     check?: boolean
     checkmate?: boolean
     stalemate?: boolean
+    castling: boolean
     san: string
     fullMoveNumber: number
     enPassant: boolean
@@ -238,7 +239,7 @@
           && to === Game.san2sq(fObj.enPassant))
         moveInfo.san = this.moveInfo2san(moveInfo)
         moveInfo.fullMoveNumber = fObj.fullMoveNumber
-
+        moveInfo.castling = this.isShortCastling(from, to) || this.isLongCastling(from, to)
 
         if ("pnbrqkPNBRQK".indexOf(figFrom) === -1) return false
         if (Game.isFriend(figFrom, figInTo)) return false

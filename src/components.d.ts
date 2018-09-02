@@ -68,6 +68,7 @@ declare global {
       'sets': object;
       'setup': () => void;
       'trashbin': string;
+      'useFigurines': boolean;
       'version': string;
       'view': () => void;
     }
@@ -122,6 +123,7 @@ declare global {
       'set'?: string;
       'sets'?: object;
       'trashbin'?: string;
+      'useFigurines'?: boolean;
       'version'?: string;
     }
 

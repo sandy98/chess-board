@@ -31,6 +31,7 @@ interface BoardModes {
 })
 export class ChessBoard {
   @Prop() version: string = '0.1.0'
+  @Prop({mutable: true}) useFigurines: boolean = true
   @Prop() sets: object = chessSets
   @Prop({mutable: true}) set: string = 'default'
   @Watch('set')
@@ -166,6 +167,10 @@ export class ChessBoard {
 
   @Method()
   goto(n: number) {
+    if (this.boardMode !== this.modes['MODE_VIEW'] 
+        && this.boardMode !== this.modes['MODE_ANALYSIS']) {
+          return
+        }
     this.current = n < 0 
       ? 0
       : n > this.getMaxPos()
@@ -403,21 +408,42 @@ export class ChessBoard {
   }
 
   renderNotation() {
-    return (
+    let sanStyle: object = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      cursor: 'pointer',
+      height: '2em',
+    }
+    let history = this.game['history']({verbose: true})
+  
+    return ([
+      <div
+        style={{
+          display: this.boardMode === 'MODE_SETUP' ? 'none' : 'block',
+          paddingLeft: '1em',
+          paddingRight: '1em',
+          marginBottom: '0.5em'
+        }}
+      >
+        <custom-p>White <span>Vic Cacarulo</span></custom-p>
+        <custom-p>Black <span>José Raúl</span></custom-p>
+      </div>,
       <div
         class="notation"
         style={{
           display: this.boardMode === 'MODE_SETUP' ? 'none' : 'flex',
           flexDirection: 'row',
           flexWrap: 'wrap',
-          justifyContent: 'stretch',
+          justifyContent: 'flex-start',
           alignItems: 'flex-start',
+          alignContent: 'flex-start',
           backgroundColor: 'white',
-          width: '100%',
-          minWidth: '100%',
-          maxWidth: '100%',
-          height: '10%',
-          minHeight: '10%',
+          //width: '100%',
+          //minWidth: '100%',
+          //maxWidth: '100%',
+          height: '100%',
+          minHeight: '100%',
           maxHeight: '100%',
           overflowX: 'hidden',
           overflowY: 'auto',
@@ -426,40 +452,56 @@ export class ChessBoard {
       >
         <div
           onClick={() => this.goto(0)}
-          style={{
-            border: 'solid 2px steelblue',
-            background: 0 === this.current ? this.lightBgColor : 'inherit',
-            cursor: 'pointer',
-            height: '1em',
-            width: '3em',
-            maxWidth: '3em',
-            minWidth: '3em'
-          }}
+          style={{...sanStyle,   
+                  border: 'solid 1px steelblue', 
+                  background: 0 === this.current ? this.lightBgColor : 'inherit'
+                }}
         >
-        <span>&nbsp;</span>
+          <span>&nbsp;&nbsp;&nbsp;</span>
         </div>
-        {this.getPGN().split('  ').map(
+        {this.getPGN().split('  ').filter(i => i.length).map(
           (san, index) => {
+            let figure = history[index]['figureFrom']
+            let castling: boolean = history[index]['castling']
+            let sliced = san.replace(/^\d+\.\s+/, '').slice(1)
+            let m = san.match(/^\d+\.\s/)
+            let prefix = m ? m[0] : ''
             return (
               <div
                 key={index}
-                onClick={() => this.goto(index)}
+                onClick={() => this.goto(index + 1)} 
                 style={{
-                  background: index === this.current ? this.lightBgColor : 'inherit',
-                  cursor: 'pointer',
-                  height: '1em',
-                  width: '3em',
-                  maxWidth: '3em',
-                  minWidth: '3em'
+                  ...sanStyle,
+                  background: (index + 1) === this.current ? this.lightBgColor : 'inherit'
                 }}
               >
-                <span>{san}</span>
+                <span>&nbsp;</span>
+                  {
+                    this.useFigurines && !figure.match(/[Pp]/) && !castling
+                      ? <div style={{
+                            display: 'flex', 
+                            flexDirection: 'row',
+                            justifyContent: 'flexStart',
+                            alignItems: 'center'
+                          }}
+                        >
+                          {prefix}
+                          <img
+                            src={chessSets['default'][figure]}
+                            style={{width: '1.8em', height: '1.8em'}}
+                           />
+                           {sliced}
+                          
+                        </div>
+                       : <span>{san}</span>
+                  }
+                <span>&nbsp;</span>
               </div>
             )
           }
         )}
       </div>
-    )
+    ])
   }
 
   renderSetup() {
