@@ -43,7 +43,7 @@ declare global {
       'getInitialFen': () => string;
       'getMaxPos': () => number;
       'getMode': () => string;
-      'getPGN': () => string;
+      'getPgnMoves': () => string;
       'getPos': (n?: number) => string;
       'getTurn': (n?: number) => string;
       'goto': (n: number) => void;
@@ -58,6 +58,7 @@ declare global {
       'isFlipped': () => boolean;
       'modes': object;
       'play': () => void;
+      'realGame': object;
       'rerender': () => void;
       'resetGame': (fen?: string) => void;
       'schemas': object;
@@ -68,6 +69,7 @@ declare global {
       'sets': object;
       'setup': () => void;
       'trashbin': string;
+      'undo': () => boolean;
       'useFigurines': boolean;
       'version': string;
       'view': () => void;
@@ -119,6 +121,7 @@ declare global {
       'modes'?: object;
       'onFlipEvent'?: (event: CustomEvent) => void;
       'onMoveEvent'?: (event: CustomEvent) => void;
+      'realGame'?: object;
       'schemas'?: object;
       'set'?: string;
       'sets'?: object;

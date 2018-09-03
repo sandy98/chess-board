@@ -32,7 +32,31 @@
     fen(): string
   }
 
+  interface iSevenTags {
+    Event: string
+    Site: string
+    Date: string
+    Round: string
+    White: string
+    Black: string
+    Result: string
+  }
+
+  interface iResults {
+    white: string
+    black: string
+    draw: string
+    unterminated: string
+  }
+
   export default class Game implements iGame {
+    static PgnDate(dt: Date = new Date()): string {
+      let y = dt.getFullYear()
+      let m = (dt.getMonth() + 1).toString().replace(/^(\d)$/, '0$1')
+      let d = (dt.getDate()).toString().replace(/^(\d)$/, '0$1')
+      return `${y}.${m}.${d}`
+    }
+
     static row(sq: number): number {
       return Math.floor(sq / 8)
     }
@@ -112,6 +136,12 @@
         return `${String.fromCharCode((sq % 8) + 97)}${Math.floor(sq / 8) + 1}`
     }
 
+    static results: iResults = {
+      white: '1-0',
+      black: '0-1',
+      draw: '1/2-1/2',
+      unterminated: '*'
+    }
     static defaultFen: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
     static emptyFen: string = '8/8/8/8/8/8/8/8 w - - 0 1'
   
@@ -122,7 +152,16 @@
 
     fens: string[] = []
     sans: iMoveInfo[] = []
-  
+    tags: iSevenTags = <iSevenTags>{
+      Event: 'Internet Game',
+      Site: 'Internet',
+      Date: Game.PgnDate(),
+      Round: '?',
+      White: 'White Player',
+      Black: 'Black Player',
+      Result: Game.results.unterminated
+    }
+
     constructor(fen: string = Game.defaultFen) {
       this.reset(fen)
     }
@@ -219,6 +258,17 @@
         return `${figure}${capture}${dest}${promotion}${checkInfo}`
     }
 
+    canMove(moveInfo: iMoveInfo) {
+      let { figureFrom, figureTo, turn } = moveInfo
+
+      if ("pnbrqkPNBRQK".indexOf(figureFrom) === -1) return false
+      if (Game.isFriend(figureFrom, figureTo)) return false
+      if ((Game.isWhiteFigure(figureFrom) && turn === 'b')
+        || (Game.isBlackFigure(figureFrom) && turn === 'w')) return false
+      
+      return true
+    }
+
     move(from: any, to: any, promotion: string = null): boolean {
         let fObj: fenObj = Game.fen2obj(this.fens[this.getMaxPos()])
         let pos: string[] = fObj.pos.split('')
@@ -241,10 +291,9 @@
         moveInfo.fullMoveNumber = fObj.fullMoveNumber
         moveInfo.castling = this.isShortCastling(from, to) || this.isLongCastling(from, to)
 
-        if ("pnbrqkPNBRQK".indexOf(figFrom) === -1) return false
-        if (Game.isFriend(figFrom, figInTo)) return false
-        if ((Game.isWhiteFigure(figFrom) && turn === 'b')
-          || (Game.isBlackFigure(figFrom) && turn === 'w')) return false
+        let bCan = this.canMove(moveInfo)
+
+        if (!bCan) return false
 
         pos[from] = '0'
         pos[to] = figTo
@@ -330,7 +379,7 @@
         }
     }
 
-    pgn(): string {
+    pgnMoves(): string {
         let resp: string = this.history({verbose: true}).map(mi => {
             let info: iMoveInfo = <iMoveInfo>mi
             let prefix: string = info.turn === 'w' ? `${info.fullMoveNumber}. ` : ''
@@ -340,5 +389,19 @@
         .join('  ')
         return resp
     }
+
+    undo(): boolean {
+      if (this.getMaxPos() < 1) return false
+      this.fens.pop()
+      this.sans.pop()
+      return true
+    }
   }
   
+export class ChessGame extends Game {
+
+  canMove(moveInfo: iMoveInfo): boolean {
+    return super.canMove(moveInfo)
+  }
+}
+

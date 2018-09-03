@@ -1,9 +1,18 @@
 import { Component, Prop, State, Listen, Method, Watch, Event, EventEmitter} from '@stencil/core'
 import chessSets from 'chess-sets'
 import Game from '../../lib/game'
+import { ChessGame } from '../../lib/game'
 
 const getUuid = (): string => new Date().getTime().toString(16)
 
+/*
+interface iBoardModes {
+  MODE_ANALYSIS: string
+  MODE_PLAY: string  
+  MODE_SETUP: string
+  MODE_VIEW: string
+}
+*/
 
 interface fenObj {
   pos: string
@@ -15,14 +24,7 @@ interface fenObj {
   fullMoveNumber: number
 }
 
-/*
-interface BoardModes {
-  MODE_ANALYSIS: string
-  MODE_PLAY: string  
-  MODE_SETUP: string
-  MODE_VIEW: string
-}
-*/
+
 
 @Component({
   tag: 'chess-board',
@@ -53,6 +55,7 @@ export class ChessBoard {
 
   @Prop({reflectToAttr: true}) initialFen: string
   @Prop({mutable: true}) game: object = new Game(this.getInitialFen())
+  @Prop({mutable: true}) realGame: object = new ChessGame(this.getInitialFen())
 
   @Prop() initialFlipped: boolean = false
 
@@ -124,11 +127,45 @@ export class ChessBoard {
   @Listen('moveEvent')
   handleMoveEvent(mEv: CustomEvent) {
     console.log(`Move: ${mEv.detail.toString()}`)
-    console.log(this.game['pgn']())
+    //console.log(this.game['pgn']())
+    this['notationElement'].scrollTop = this['notationElement'].scrollHeight
   }
 
   componentDidLoad() {
     //console.log("Board loaded")
+    const keybdHandler = (ev) => {
+      /*
+      console.log("")
+      console.log("code: " + ev.code)        
+      console.log("chrCode: " + ev.charCode)        
+      console.log("key: " + ev.key)
+      console.log("keyCode: " + ev.keyCode)      
+      */
+      ev.preventDefault()
+      switch (ev.keyCode) {
+        case 36: //Home
+        this.goto(0)
+        break
+        case 35: //End
+        this.goto(this.getMaxPos())
+        break
+        case 33: // PageUp
+        this.goto(this.getCurrent() - 10)
+        break
+        case 34: //PageDown
+        this.goto(this.getCurrent() + 10)
+        break
+        case 37: // ArrowLeft
+        this.goto(this.getCurrent() - 1)
+        break
+        case 39: //ArrowRight
+        this.goto(this.getCurrent() + 1)
+        break
+        default:
+        //do Nothing
+      }
+    }
+    this[`${this.id}-main`]['addEventListener']('keydown', keybdHandler)    
     this.isMounted = true
     this.boardMode = this.initialMode
     this.validateSet(this.set, 'default')
@@ -139,7 +176,15 @@ export class ChessBoard {
   @Method() getCurrent(): number {return this.current}
   @Method() getMode(): string {return this.boardMode}
 
-  @Method() getPGN(): string {return this.game['pgn']()}
+  @Method() getPgnMoves(): string {return this.game['pgnMoves']()}
+
+  @Method() 
+  undo(): boolean {
+    if (this.boardMode === this.modes['MODE_PLAY']) return false
+    let res: boolean = this.game['undo']()
+    if (res) this.goto(this.getMaxPos())
+    return res
+  }
 
   @Method()
   analyze() {this.boardMode = this.modes['MODE_ANALYSIS']}
@@ -415,6 +460,12 @@ export class ChessBoard {
       cursor: 'pointer',
       height: '2em',
     }
+
+    let tagStyle: object = {
+      color: 'black',
+      fontFamily: 'monospace'
+    }
+
     let history = this.game['history']({verbose: true})
   
     return ([
@@ -423,14 +474,25 @@ export class ChessBoard {
           display: this.boardMode === 'MODE_SETUP' ? 'none' : 'block',
           paddingLeft: '1em',
           paddingRight: '1em',
-          marginBottom: '0.5em'
+          paddingBottom: '1em',
+          height: '25%',
+          minHeight: '25%',
+          maxHeight: '25%'
         }}
       >
-        <custom-p>White <span>Vic Cacarulo</span></custom-p>
-        <custom-p>Black <span>José Raúl</span></custom-p>
+        <custom-p>
+          White<span style={{...tagStyle}}>{this.game['tags']['White']}</span>
+        </custom-p>
+        <custom-p>
+          Black<span style={{...tagStyle}}>{this.game['tags']['Black']}</span>
+        </custom-p>
+        <custom-p>
+          Result<span style={{...tagStyle}}>{this.game['tags']['Result']}</span>
+        </custom-p>
       </div>,
       <div
         class="notation"
+        ref={(el: HTMLDivElement) => this['notationElement'] = el}
         style={{
           display: this.boardMode === 'MODE_SETUP' ? 'none' : 'flex',
           flexDirection: 'row',
@@ -439,14 +501,14 @@ export class ChessBoard {
           alignItems: 'flex-start',
           alignContent: 'flex-start',
           backgroundColor: 'white',
-          //width: '100%',
-          //minWidth: '100%',
-          //maxWidth: '100%',
-          height: '100%',
-          minHeight: '100%',
-          maxHeight: '100%',
+          width: '95%',
+          minWidth: '95%',
+          maxWidth: '95%',
+          height: '62%',
+          minHeight: '62%',
+          maxHeight: '62%',
           overflowX: 'hidden',
-          overflowY: 'auto',
+          overflowY: 'scroll',
           padding: '0.5em',
       }}
       >
@@ -459,7 +521,7 @@ export class ChessBoard {
         >
           <span>&nbsp;&nbsp;&nbsp;</span>
         </div>
-        {this.getPGN().split('  ').filter(i => i.length).map(
+        {this.getPgnMoves().split('  ').filter(i => i.length).map(
           (san, index) => {
             let figure = history[index]['figureFrom']
             let castling: boolean = history[index]['castling']
@@ -994,7 +1056,11 @@ export class ChessBoard {
       <div 
         class="main" 
         id={`${this.id}-main`}
+        ref={(el) => this[`${this.id}-main`] = el}
         onContextMenu={(ev: UIEvent) => ev.preventDefault()}
+        onKeyDown={(ev: KeyboardEvent) =>{
+          console.log("Keyboard event code" + ev.charCode)
+        }}
         style={{
           display: 'flex',
           width: '100%',
