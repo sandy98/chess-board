@@ -26,6 +26,7 @@ declare global {
 
     interface ChessBoard {
       'analyze': () => void;
+      'autoPromotion': string;
       'canEndHere': (square: number) => boolean;
       'canStartHere': (figure: string) => boolean;
       'default': () => void;
@@ -58,7 +59,6 @@ declare global {
       'isFlipped': () => boolean;
       'modes': object;
       'play': () => void;
-      'realGame': object;
       'rerender': () => void;
       'resetGame': (fen?: string) => void;
       'schemas': object;
@@ -108,6 +108,7 @@ declare global {
   namespace JSXElements {
 
     export interface ChessBoardAttributes extends HTMLAttributes {
+      'autoPromotion'?: string;
       'figurines'?: object;
       'game'?: object;
       'highLightBg'?: string;
@@ -121,7 +122,6 @@ declare global {
       'modes'?: object;
       'onFlipEvent'?: (event: CustomEvent) => void;
       'onMoveEvent'?: (event: CustomEvent) => void;
-      'realGame'?: object;
       'schemas'?: object;
       'set'?: string;
       'sets'?: object;
