@@ -379,6 +379,14 @@
         }
     }
 
+    pgnHeaders(): string {
+      let arr = []
+      for (let t in this.tags) {
+        arr = [...arr, `[${t} "${this.tags[t]}"]`]
+      }
+      return arr.join('\n')
+    }
+
     pgnMoves(): string {
         let resp: string = this.history({verbose: true}).map(mi => {
             let info: iMoveInfo = <iMoveInfo>mi
@@ -388,6 +396,10 @@
         })
         .join('  ')
         return resp
+    }
+
+    pgn(): string {
+      return [this.pgnHeaders(), this.pgnMoves()].join('\n\n')
     }
 
     undo(): boolean {

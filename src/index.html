@@ -55,30 +55,34 @@
       <div class="controls">
         <p class="centered">
           <button onclick="onShowVersion()">Show Version</button>
-        </p>
+        </custom-p>
         <p class="centered">
           <button id="btnFlip" onclick="board.flip()">Flip Board</button>
-        </p>
+        </custom-p>
         <p class="centered">
             <button id="btnSetup" onclick="board.setup()">Setup Board</button>
-        </p>
-        <p>
+        </custom-p>
+        <custom-p style="width: 80%">
           <label for="cboSets">Figures set</label>
           <select id="cboSets"></select>
-        </p>
-        <p>
+        </custom-p>
+        <custom-p style="width: 80%">
           <label for="cboSchemas">Color schema</label>
           <select id="cboSchemas"></select>
-        </p>
-        <p>
+        </custom-p>
+        <custom-p style="width: 80%">
           <label for="cboPositions">Position</label>
           <select id="cboPositions">
           </select>
-        </p>
-        <p>
+        </custom-p>
+        <custom-p style="width: 80%">
           <label for="chkFigurines">Use figurines</label>
           <input type="checkbox" id="chkFigurines" checked>
-        </p>
+        </custom-p>
+        <custom-p style="width: 80%;">
+          <label>Automatic Promotion (Queen)</label>
+          <input type="checkbox" id="chk-auto-prom" />
+        </custom-p>
       </div>
     </chess-board>
   </div>
@@ -109,6 +113,7 @@
     const cboSchs = document.querySelector('#cboSchemas')
     const cboPoss = document.querySelector('#cboPositions')
     const chkFigs = document.querySelector('#chkFigurines')
+    const chkAutoProm = document.querySelector('#chk-auto-prom')
 
     const onShowVersion = () => alert(`ChessBoard v. ${board.version}`)
     const populateSets = () => {
@@ -179,6 +184,13 @@
       console.log("Frame width: " + document.querySelector('#board-frame').style.width)
     }
     const onChkFigs = (ev) => board.useFigurines = !board.useFigurines
+    const onChkAutoProm = (ev) => {
+      if (ev.target.checked) {
+        board.autoPromotion = 'Q'
+      } else {
+        board.autoPromotion = null
+      }
+    }
     const preparePage = () => {
       console.log('Initializing...')
       Game = board.game ? board.game.constructor : null
@@ -186,6 +198,7 @@
       populateSchemas()
       populatePositions()
       chkFigs.onchange = onChkFigs
+      chkAutoProm.onchange = onChkAutoProm
       cboSs.onchange = onChooseSet
       cboSchs.onchange = onChooseSchema
       cboPoss.onchange = (ev) => board.resetGame(Game[ev.target.value]) 

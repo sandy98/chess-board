@@ -310,6 +310,7 @@ export class ChessBoard {
 
   @Method()
   flip() {
+    if (this.isPromoting) return
     this.flipped = !this.flipped
     this.flipEvent.emit(this.flipped)
   }
@@ -376,14 +377,10 @@ export class ChessBoard {
   } 
 
   onDragStart(figure: string, square: number, ev: DragEvent) {
-  
     if (!this.canStartHere(figure)) {
       ev.preventDefault()
       return false  
     }
-
-  
-    //console.log(`Dragging figure ${figure} from square ${square}`)
 
     let size: number = this.boardHeight / 8
     let pos: number = size / 2
@@ -403,6 +400,7 @@ export class ChessBoard {
   }
 
   onDrop(square: number, _) {
+    if (this.isPromoting) return false
     if (!this.canEndHere(square)) {
       this.sqFrom = -1
       this.figureFrom = null
@@ -415,6 +413,7 @@ export class ChessBoard {
   }
 
   onSquareClick(square: number, figure: string, _) {
+    if (this.isPromoting) return false
     if (this.sqFrom === -1) {
       if (!this.canStartHere(figure)) {
         return false  
