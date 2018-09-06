@@ -110,9 +110,17 @@ export class ChessBoard {
   @State() setupObj: fenObj = null
   @State() castlingPermissions: string[]
   @State() isPromoting: boolean = false
+  @State() menuX: number = 0
+  @State() menuY: number = 0
+  @State() menuDisplay: string = 'none'
 
   @Event() flipEvent: EventEmitter
   @Event() moveEvent: EventEmitter
+
+  @Listen('closeMenu')
+  onCloseMenu() {
+    this.menuDisplay = 'none'
+  }
 
   @Listen('window:resize')
   handleResize() {
@@ -952,23 +960,28 @@ export class ChessBoard {
           class="board" 
           id={`${this.id}-board`}
           ref={(el: HTMLDivElement) => this['boardElement'] = el}
-          onContextMenu={(ev: UIEvent) => {
+          onContextMenu={(ev: MouseEvent) => {
+            console.log(ev)
             ev.preventDefault()
             if (this.boardMode === this.modes['MODE_SETUP']) return
-            if (confirm("Enter Setup")) {
-              this.setup()
-            }
+            // if (confirm("Enter Setup")) {
+            //   this.setup()
+            // }
+            this.menuX = ev.clientX
+            this.menuY = ev.clientY
+            this.menuDisplay = 'block'
           }}
           style={{
             display: 'flex',
             flexDirection: 'column',
-            background: 'lightblue',
+            background: 'transparent',
             width: window['innerHeight'] > window['innerWidth'] ? '100%' : '60%',
             minWidth: window['innerHeight'] > window['innerWidth'] ? '100%' : '60%',
             maxWidth: window['innerHeight'] > window['innerWidth'] ? '100%' : '60%',
             height: `${this.boardHeight}px`,
             minHeight: `${this.boardHeight}px`,
             maxHeight: `${this.boardHeight}px`,
+            opacity: this.isPromoting ? '0.3' : '1'
           }}
           onDblClick={() => this.flip()}
         >
@@ -1087,7 +1100,8 @@ export class ChessBoard {
           background: Game.isLight(this.sqTo)  ? this.lightBgColor : this.darkBgColor,
           top: `${offsetTop}px`,
           left: `${offsetLeft}px`,
-          zOrder: '100' 
+          zIndex: '100',
+          opacity: '1' 
         }}
       >
         {
@@ -1123,6 +1137,99 @@ export class ChessBoard {
     )
   }
 
+  renderMenuPanel() {
+    let arrSchemas: string[] = []
+    for (let schema in this.schemas) arrSchemas = [...arrSchemas, schema]
+    let arrFigures: string[] = []
+    for (let set in chessSets) arrFigures = [...arrFigures, set]
+    return (
+      <context-menu
+       ref={(el: HTMLDivElement) => this['menuElement'] = el}
+       items={5}
+       x={this.menuX}
+       y={this.menuY}
+       header="Options"
+       menuDisplay={this.menuDisplay}
+       ovlBg="transparent"
+      >
+        <custom-p slot="0" style={{width: '90%'}}>
+          <label>Set Auto Promotion (Queen)</label>
+          <input
+            type="checkbox"
+            style={{cursor: 'pointer'}}
+            checked={this.autoPromotion !== null}
+            onChange={(e: UIEvent) => {
+              console.log(e)
+              this.autoPromotion = this.autoPromotion === null
+             ? 'Q'
+             : null}}
+          />
+        </custom-p>
+        <div 
+          slot="1"
+          style={{
+            cursor: 'pointer', 
+            border: 'solid 1px', 
+            padding: '5px',
+            borderRadius: '8px',
+            background: this.lightBgColor
+          }}
+          onClick={() => {
+            this.menuDisplay = 'none'
+            this.setup()
+          }}
+        >
+          Enter Setup Mode
+        </div>
+        <div 
+          slot="2"
+          style={{
+            cursor: 'pointer', 
+            border: 'solid 1px', 
+            padding: '5px',
+            borderRadius: '8px',
+            background: this.lightBgColor
+          }}
+          onClick={() => {
+            this.flip()
+          }}
+        >
+          {this.flipped ? 'Unflip Board' : 'Flip Board'}
+        </div>
+        <custom-p slot="3" style={{width: '90%'}}>
+          <label>Color schema</label>
+          <select 
+            onChange={(ev: UIEvent) => this.setSchema(ev.target['value'])}
+          >
+            {arrSchemas.map(schema => {
+              return <option 
+                        value={schema} 
+                        key={schema}
+                      >
+                        {`${schema.charAt(0).toUpperCase()}${schema.split('').slice(1).join('')}`}
+                      </option>
+            })}
+          </select>
+        </custom-p>
+        <custom-p slot="4" style={{width: '90%'}}>
+          <label>Figures set</label>
+          <select 
+            onChange={(ev: UIEvent) => this.set = ev.target['value']}
+          >
+            {arrFigures.map(set => {
+              return <option 
+                        value={set} 
+                        key={set}
+                      >
+                        {`${set.charAt(0).toUpperCase()}${set.split('').slice(1).join('')}`}
+                      </option>
+            })}
+          </select>
+        </custom-p>
+      </context-menu>
+    )
+  }
+
   render() {
     this.getBoardHeight()
     return (
@@ -1140,14 +1247,15 @@ export class ChessBoard {
           minWidth: '100%',
           maxWidth: '100%',
           color: 'steelblue',
-          background: 'slateblue',
+          background: 'transparent',
           border: 'solid 1px',
-          flexDirection: window['innerHeight'] > window['innerWidth'] ? 'column' : 'row'
+          flexDirection: window['innerHeight'] > window['innerWidth'] ? 'column' : 'row',
         }}
       >
         {this.renderBoard()}
         {this.renderLateralPanel()}
         {this.renderPromotionPanel()}
+        {this.renderMenuPanel()}
       </div>
     )
   }

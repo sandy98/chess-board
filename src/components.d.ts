@@ -75,6 +75,16 @@ declare global {
       'view': () => void;
     }
 
+    interface ContextMenu {
+      'footer': string;
+      'header': string;
+      'items': number;
+      'menuDisplay': string;
+      'ovlBg': string;
+      'x': number;
+      'y': number;
+    }
+
     interface CustomP {
 
     }
@@ -86,6 +96,14 @@ declare global {
     var HTMLChessBoardElement: {
       prototype: HTMLChessBoardElement;
       new (): HTMLChessBoardElement;
+    };
+    
+
+    interface HTMLContextMenuElement extends StencilComponents.ContextMenu, HTMLStencilElement {}
+
+    var HTMLContextMenuElement: {
+      prototype: HTMLContextMenuElement;
+      new (): HTMLContextMenuElement;
     };
     
 
@@ -101,6 +119,7 @@ declare global {
     interface Element {}
     export interface IntrinsicElements {
     'chess-board': JSXElements.ChessBoardAttributes;
+    'context-menu': JSXElements.ContextMenuAttributes;
     'custom-p': JSXElements.CustomPAttributes;
     }
   }
@@ -130,6 +149,17 @@ declare global {
       'version'?: string;
     }
 
+    export interface ContextMenuAttributes extends HTMLAttributes {
+      'footer'?: string;
+      'header'?: string;
+      'items'?: number;
+      'menuDisplay'?: string;
+      'onCloseMenu'?: (event: CustomEvent) => void;
+      'ovlBg'?: string;
+      'x'?: number;
+      'y'?: number;
+    }
+
     export interface CustomPAttributes extends HTMLAttributes {
 
     }
@@ -137,11 +167,13 @@ declare global {
 
   interface HTMLElementTagNameMap {
     'chess-board': HTMLChessBoardElement
+    'context-menu': HTMLContextMenuElement
     'custom-p': HTMLCustomPElement
   }
 
   interface ElementTagNameMap {
     'chess-board': HTMLChessBoardElement;
+    'context-menu': HTMLContextMenuElement;
     'custom-p': HTMLCustomPElement;
   }
 }
