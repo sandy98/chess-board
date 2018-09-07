@@ -25,13 +25,6 @@
     enPassant: boolean
   }
 
-  interface iGame {
-    fens: string[]
-    sans: iMoveInfo[]
-    move(from: any, to: any, promotion: string): boolean
-    fen(): string
-  }
-
   interface iSevenTags {
     Event: string
     Site: string
@@ -47,6 +40,15 @@
     black: string
     draw: string
     unterminated: string
+  }
+
+  interface iGame {
+    tags: iSevenTags
+    fens: string[]
+    sans: iMoveInfo[]
+    move(from: any, to: any, promotion: string): boolean
+    fen(): string
+    pgn(): string
   }
 
   export default class Game implements iGame {
@@ -270,6 +272,14 @@
     }
 
     move(from: any, to: any, promotion: string = null): boolean {
+        if (typeof from === 'string') {
+          from = Game.san2sq(from)
+        }  
+
+        if (typeof to === 'string') {
+          to = Game.san2sq(to)
+        }  
+
         let fObj: fenObj = Game.fen2obj(this.fens[this.getMaxPos()])
         let pos: string[] = fObj.pos.split('')
         let turn: string = fObj.turn
@@ -278,6 +288,7 @@
         let figTo: string = promotion ? promotion : figFrom
 
         let moveInfo = <iMoveInfo>{enPassant: false}
+
 
         moveInfo.turn = turn
         moveInfo.from = from
@@ -410,10 +421,4 @@
     }
   }
   
-export class ChessGame extends Game {
-
-  canMove(moveInfo: iMoveInfo): boolean {
-    return super.canMove(moveInfo)
-  }
-}
 

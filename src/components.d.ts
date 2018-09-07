@@ -31,7 +31,6 @@ declare global {
       'canStartHere': (figure: string) => boolean;
       'default': () => void;
       'empty': () => void;
-      'figurines': object;
       'flip': () => void;
       'game': object;
       'getBoardHeight': () => number;
@@ -57,11 +56,9 @@ declare global {
       'initialLightBgColor': string;
       'initialMode': string;
       'isFlipped': () => boolean;
-      'modes': object;
       'play': () => void;
       'rerender': () => void;
       'resetGame': (fen?: string) => void;
-      'schemas': object;
       'set': string;
       'setBg': (light: string, dark: string) => void;
       'setSchema': (schema?: string) => void;
@@ -128,7 +125,6 @@ declare global {
 
     export interface ChessBoardAttributes extends HTMLAttributes {
       'autoPromotion'?: string;
-      'figurines'?: object;
       'game'?: object;
       'highLightBg'?: string;
       'humanSide'?: string;
@@ -138,10 +134,8 @@ declare global {
       'initialFlipped'?: boolean;
       'initialLightBgColor'?: string;
       'initialMode'?: string;
-      'modes'?: object;
       'onFlipEvent'?: (event: CustomEvent) => void;
       'onMoveEvent'?: (event: CustomEvent) => void;
-      'schemas'?: object;
       'set'?: string;
       'sets'?: object;
       'trashbin'?: string;

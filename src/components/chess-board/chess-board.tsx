@@ -5,14 +5,25 @@ import Game from '../../lib/game'
 
 const getUuid = (): string => new Date().getTime().toString(16)
 
-/*
+
 interface iBoardModes {
   MODE_ANALYSIS: string
   MODE_PLAY: string  
   MODE_SETUP: string
   MODE_VIEW: string
 }
-*/
+
+interface iSchema {
+  light: string
+  dark: string
+}
+
+interface iSchemas {
+  brown: iSchema
+  blue: iSchema
+  acqua: iSchema
+  green: iSchema
+}
 
 interface fenObj {
   pos: string
@@ -25,41 +36,28 @@ interface fenObj {
 }
 
 
-
 @Component({
   tag: 'chess-board',
   styleUrl: 'chess-board.css',
   shadow: true
 })
 export class ChessBoard {
-  @Prop() version: string = '0.1.0'
-  @Prop({mutable: true}) useFigurines: boolean = true
-  @Prop() sets: object = chessSets
-  @Prop({mutable: true}) set: string = 'default'
-  @Watch('set')
-  validateSet(newValue: string, oldValue: string) {
-    if (!(newValue in chessSets)) {
-      //console.log(newValue + " is an invalid value for set property")
-      this.set = oldValue
-    } else {
-      this.set = newValue
-    }
-  }
-  @Prop() id: string = getUuid()
-  @Prop() schemas: object = {
+  
+  static boardModes: iBoardModes = {
+    MODE_ANALYSIS: 'MODE_ANALYSIS',
+    MODE_PLAY: 'MODE_PLAY',
+    MODE_SETUP: 'MODE_SETUP',
+    MODE_VIEW: 'MODE_VIEW'
+  } 
+
+  static schemas: iSchemas = {
     brown: {light: '#f0d9b5', dark: '#b58863'},
     blue: {light: '#add8e6', dark: '#6495ed'},
     acqua: {light: '#dfdfdf', dark: '#56b6e2'},
-    green: {light: 'beige', oldLight: '#faffBd', dark: '#769656'}
+    green: {light: 'beige', dark: '#769656'}
   }
 
-  @Prop({reflectToAttr: true}) initialFen: string
-  @Prop({mutable: true}) game: object = new Game(this.getInitialFen())
-  //@Prop({mutable: true}) realGame: object = new ChessGame(this.getInitialFen())
-
-  @Prop() initialFlipped: boolean = false
-
-  @Prop() figurines: object = {
+  static figurines: object = {
     p: {codePoint: '0x265f',	html: '&#9823;'},
     n: {codePoint: '0x265e',	html: '&#9822;'},
     b: {codePoint: '0x265d',	html: '&#9821;'},
@@ -74,14 +72,27 @@ export class ChessBoard {
     K: {codePoint: '0x2654',	html: '&#9812;'}
   }
 
-  @Prop() modes: object = {
-    MODE_ANALYSIS: 'MODE_ANALYSIS',
-    MODE_PLAY: 'MODE_PLAY',
-    MODE_SETUP: 'MODE_SETUP',
-    MODE_VIEW: 'MODE_VIEW'
+  @Prop() version: string = '0.1.0'
+  @Prop({mutable: true}) useFigurines: boolean = true
+  @Prop() sets: object = chessSets
+  @Prop({mutable: true}) set: string = 'default'
+  @Watch('set')
+  validateSet(newValue: string, oldValue: string) {
+    if (!(newValue in chessSets)) {
+      //console.log(newValue + " is an invalid value for set property")
+      this.set = oldValue
+    } else {
+      this.set = newValue
+    }
   }
+  @Prop() id: string = getUuid()
+  @Prop({reflectToAttr: true}) initialFen: string
+  @Prop({mutable: true}) game: object = new Game(this.getInitialFen())
+  //@Prop({mutable: true}) realGame: object = new ChessGame(this.getInitialFen())
 
-  @Prop() initialMode: string = this.modes['MODE_ANALYSIS']
+  @Prop() initialFlipped: boolean = false
+
+  @Prop() initialMode: string = ChessBoard.boardModes.MODE_ANALYSIS
   @Prop({mutable: true}) humanSide: string = 'w'
   @Prop({mutable: true}) highLightBg: string = '#bfd'
   @Prop({mutable: true}) autoPromotion: string = null
@@ -96,7 +107,7 @@ export class ChessBoard {
   @State() boardMode: string = this.initialMode
   @Watch('boardMode')
   testMode(newValue: string, oldValue: string) {
-    if (!(newValue in this.modes)) {
+    if (!(newValue in ChessBoard.boardModes)) {
       //console.log(`${newValue} is not an accepted board mode.`)
       this.boardMode = oldValue
     }
@@ -104,8 +115,8 @@ export class ChessBoard {
   @State() flipped: boolean = this.initialFlipped
   @State() isMounted: boolean = false
   @State() boardHeight: number = 320
-  @State() lightBgColor: string = this.initialLightBgColor || this.schemas['blue']['light']
-  @State() darkBgColor: string = this.initialDarkBgColor || this.schemas['blue']['dark']
+  @State() lightBgColor: string = this.initialLightBgColor || ChessBoard.schemas.blue.light
+  @State() darkBgColor: string = this.initialDarkBgColor || ChessBoard.schemas.blue.dark
   @State() current: number = 0
   @State() setupObj: fenObj = null
   @State() castlingPermissions: string[]
@@ -126,6 +137,38 @@ export class ChessBoard {
   handleResize() {
     this.flip()
     this.flip()
+  }
+
+  @Listen('document:keydown')
+  keybdHandler(ev: KeyboardEvent) {
+    switch (ev.keyCode) {
+      case 36: //Home
+      ev.preventDefault()
+      this.goto(0)
+      break
+      case 35: //End
+      ev.preventDefault()
+      this.goto(this.getMaxPos())
+      break
+      case 33: // PageUp
+      ev.preventDefault()
+      this.goto(this.getCurrent() - 10)
+      break
+      case 34: //PageDown
+      ev.preventDefault()
+      this.goto(this.getCurrent() + 10)
+      break
+      case 37: // ArrowLeft
+      ev.preventDefault()
+      this.goto(this.getCurrent() - 1)
+      break
+      case 39: //ArrowRight
+      ev.preventDefault()
+      this.goto(this.getCurrent() + 1)
+      break
+      default:
+      //do Nothing
+    }
   }
 
   @Listen('window:orientationchange')
@@ -190,17 +233,17 @@ export class ChessBoard {
 
   @Method() 
   undo(): boolean {
-    if (this.boardMode === this.modes['MODE_PLAY']) return false
+    if (this.boardMode === ChessBoard.boardModes.MODE_PLAY) return false
     let res: boolean = this.game['undo']()
     if (res) this.goto(this.getMaxPos())
     return res
   }
 
   @Method()
-  analyze() {this.boardMode = this.modes['MODE_ANALYSIS']}
+  analyze() {this.boardMode = ChessBoard.boardModes.MODE_ANALYSIS}
 
   @Method()
-  play() {this.boardMode = this.modes['MODE_PLAY']} 
+  play() {this.boardMode = ChessBoard.boardModes.MODE_PLAY} 
 
   @Method()
   setup() {
@@ -214,16 +257,16 @@ export class ChessBoard {
       castling.indexOf('k') === -1 ? '': 'k',
       castling.indexOf('q') === -1 ? '': 'q',
     ]
-    this.boardMode = this.modes['MODE_SETUP']
+    this.boardMode = ChessBoard.boardModes.MODE_SETUP
   }
 
   @Method()
-  view() {this.boardMode = this.modes['MODE_VIEW']}
+  view() {this.boardMode = ChessBoard.boardModes.MODE_VIEW}
 
   @Method()
   goto(n: number) {
-    if (this.boardMode !== this.modes['MODE_VIEW'] 
-        && this.boardMode !== this.modes['MODE_ANALYSIS']) {
+    if (this.boardMode !== ChessBoard.boardModes.MODE_VIEW 
+        && this.boardMode !== ChessBoard.boardModes.MODE_ANALYSIS) {
           return
         }
     this.current = n < 0 
@@ -244,7 +287,7 @@ export class ChessBoard {
 
   @Method()
   getPos(n: number = this.current):string {
-    return this.boardMode !== this.modes['MODE_SETUP']
+    return this.boardMode !== ChessBoard.boardModes.MODE_SETUP
       ? this._getWhat('getPos', n)
       : this.setupObj.pos
   }
@@ -287,8 +330,8 @@ export class ChessBoard {
 
   @Method()
   setSchema(schema: string = 'blue'): void {
-    if (!(schema in this.schemas)) return
-    this.setBg(this.schemas[schema].light, this.schemas[schema].dark)
+    if (!(schema in ChessBoard.schemas)) return
+    this.setBg(ChessBoard.schemas[schema].light, ChessBoard.schemas[schema].dark)
   }
 
   @Method()
@@ -349,12 +392,12 @@ export class ChessBoard {
 
   @Method()
   canStartHere(figure: string): boolean {
-    if (this.boardMode === this.modes['MODE_VIEW']) return false
+    if (this.boardMode === ChessBoard.boardModes.MODE_VIEW) return false
     if (this.isPromoting) return false
     if (figure === '0') return false
     if (this.current < this.getMaxPos()) return false
-    if (this.boardMode === this.modes['MODE_SETUP']) return true
-    if (this.boardMode === this.modes['MODE_PLAY']) {
+    if (this.boardMode === ChessBoard.boardModes.MODE_SETUP) return true
+    if (this.boardMode === ChessBoard.boardModes.MODE_PLAY) {
       if (this.humanSide === 'w' && Game.isBlackFigure(figure)) return false
       if (this.humanSide === 'b' && Game.isWhiteFigure(figure)) return false
     } else {
@@ -367,7 +410,7 @@ export class ChessBoard {
 
   @Method()
   canEndHere(square: number): boolean {
-    if (this.boardMode === this.modes['MODE_SETUP']) return true
+    if (this.boardMode === ChessBoard.boardModes.MODE_SETUP) return true
     let figure = this.getPos()[square]
     return !Game.isFriend(this.figureFrom, figure)
   }
@@ -377,7 +420,7 @@ export class ChessBoard {
   
   @Method()
   setSquare(square: number, figure: string) {
-    if (this.boardMode !== this.modes['MODE_SETUP']) return
+    if (this.boardMode !== ChessBoard.boardModes.MODE_SETUP) return
     if (!this.setupObj) return
     let arrPos = this.setupObj.pos.split('')
     arrPos[square] = figure
@@ -444,7 +487,7 @@ export class ChessBoard {
   }
 
   handleEndMove(sqFrom: number, sqTo: number, figure: string, promotion: string = this.autoPromotion) {
-    if (this.boardMode === this.modes['MODE_SETUP']) {
+    if (this.boardMode === ChessBoard.boardModes.MODE_SETUP) {
       this.setSquare(sqTo, promotion ? promotion : figure)
       if (sqFrom < 64) {this.setSquare(sqFrom, '0')}
     } else {
@@ -545,6 +588,7 @@ export class ChessBoard {
         {this.getPgnMoves().split('  ').filter(i => i.length).map(
           (san, index) => {
             let figure = history[index]['figureFrom']
+            let promotion = history[index]['promotion']
             let castling: boolean = history[index]['castling']
             let sliced = san.replace(/^\d+\.\s+/, '').slice(1)
             let m = san.match(/^\d+\.\s/)
@@ -576,7 +620,13 @@ export class ChessBoard {
                            {sliced}
                           
                         </div>
-                       : <span>{san}</span>
+                       : <div
+                           innerHTML={promotion && this.useFigurines 
+                             ? san.replace(/[NBRQ]/, `<span style="font-size: 2em; color: black;">${ChessBoard.figurines[promotion]['html']}</span>`)
+                             : san
+                           }
+                         >
+                         </div>
                   }
                 <span>&nbsp;</span>
               </div>
@@ -963,7 +1013,7 @@ export class ChessBoard {
           onContextMenu={(ev: MouseEvent) => {
             console.log(ev)
             ev.preventDefault()
-            if (this.boardMode === this.modes['MODE_SETUP']) return
+            if (this.boardMode === ChessBoard.boardModes.MODE_SETUP) return
             // if (confirm("Enter Setup")) {
             //   this.setup()
             // }
@@ -1028,7 +1078,7 @@ export class ChessBoard {
                             minHeight: '100%',
                             maxHeight: '100%',
                             backgroundColor: this.sqFrom === index 
-                              && this.boardMode != this.modes['MODE_SETUP']
+                              && this.boardMode != ChessBoard.boardModes.MODE_SETUP
                               ? this.highLightBg 
                               : Game.isLight(index) 
                               ? this.lightBgColor 
@@ -1139,13 +1189,13 @@ export class ChessBoard {
 
   renderMenuPanel() {
     let arrSchemas: string[] = []
-    for (let schema in this.schemas) arrSchemas = [...arrSchemas, schema]
+    for (let schema in ChessBoard.schemas) arrSchemas = [...arrSchemas, schema]
     let arrFigures: string[] = []
     for (let set in chessSets) arrFigures = [...arrFigures, set]
     return (
       <context-menu
        ref={(el: HTMLDivElement) => this['menuElement'] = el}
-       items={5}
+       items={6}
        x={this.menuX}
        y={this.menuY}
        header="Options"
@@ -1163,6 +1213,18 @@ export class ChessBoard {
               this.autoPromotion = this.autoPromotion === null
              ? 'Q'
              : null}}
+          />
+        </custom-p>
+        <custom-p slot="3" style={{width: '90%'}}>
+          <label>Use figurines</label>
+          <input
+            type="checkbox"
+            style={{cursor: 'pointer'}}
+            checked={this.useFigurines}
+            onChange={() => {
+              //console.log(e)
+              this.useFigurines = ! this.useFigurines
+            }}
           />
         </custom-p>
         <div 
@@ -1196,7 +1258,7 @@ export class ChessBoard {
         >
           {this.flipped ? 'Unflip Board' : 'Flip Board'}
         </div>
-        <custom-p slot="3" style={{width: '90%'}}>
+        <custom-p slot="4" style={{width: '90%'}}>
           <label>Color schema</label>
           <select 
             onChange={(ev: UIEvent) => this.setSchema(ev.target['value'])}
@@ -1205,13 +1267,14 @@ export class ChessBoard {
               return <option 
                         value={schema} 
                         key={schema}
+                        selected={ChessBoard.schemas[schema].light === this.lightBgColor}
                       >
                         {`${schema.charAt(0).toUpperCase()}${schema.split('').slice(1).join('')}`}
                       </option>
             })}
           </select>
         </custom-p>
-        <custom-p slot="4" style={{width: '90%'}}>
+        <custom-p slot="5" style={{width: '90%'}}>
           <label>Figures set</label>
           <select 
             onChange={(ev: UIEvent) => this.set = ev.target['value']}
@@ -1220,6 +1283,7 @@ export class ChessBoard {
               return <option 
                         value={set} 
                         key={set}
+                        selected={set === this.set}
                       >
                         {`${set.charAt(0).toUpperCase()}${set.split('').slice(1).join('')}`}
                       </option>

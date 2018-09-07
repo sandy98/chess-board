@@ -105,14 +105,27 @@ export class ContextMenu implements iMenu, iHeader {
                   }}
                 >
                   <h3>{this.header}</h3>
-                  <span
-                    style={{cursor: 'pointer'}}
+                  <div
+                    title="Close"
+                    style={{
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      color: 'white',
+                      padding: '0.2em',
+                      background: 'red',
+                      border: 'none',
+                      borderRadius: '50%',
+                      fontWeight: 'bolder',
+                      fontSize: '1em',
+                      width: '1.2em',
+                      height: '1.2em'
+                    }}
                     onClick={() => {
                       this.closeMenu.emit()
                     }}
                   >
                     X
-                  </span>
+                  </div>
                 </div>
                 <ul style={{...tasksStyle}}>
                   {
