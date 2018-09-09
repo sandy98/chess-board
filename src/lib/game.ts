@@ -1,4 +1,5 @@
-  interface fenObj {
+
+  interface IFenObj {
     pos: string
     fenPos: string
     turn: string
@@ -8,7 +9,24 @@
     fullMoveNumber: number
   }
   
-  interface iMoveInfo {
+  interface IResults {
+    white: string
+    black: string
+    draw: string
+    unterminated: string
+  }
+
+  interface ISevenTags {
+    Event: string
+    Site: string
+    Date: string
+    Round: string
+    White: string
+    Black: string
+    Result: string
+  }
+
+  interface IMoveInfo {
     turn: string  
     from: number
     to: number
@@ -25,33 +43,17 @@
     enPassant: boolean
   }
 
-  interface iSevenTags {
-    Event: string
-    Site: string
-    Date: string
-    Round: string
-    White: string
-    Black: string
-    Result: string
-  }
-
-  interface iResults {
-    white: string
-    black: string
-    draw: string
-    unterminated: string
-  }
-
-  interface iGame {
-    tags: iSevenTags
+  interface IGame {
+    tags: ISevenTags
     fens: string[]
-    sans: iMoveInfo[]
+    sans: IMoveInfo[]
+    ascii(flipBoard: boolean, n: number)
     move(from: any, to: any, promotion: string): boolean
     fen(): string
     pgn(): string
   }
 
-  export default class Game implements iGame {
+  export default class Game implements IGame {
     static PgnDate(dt: Date = new Date()): string {
       let y = dt.getFullYear()
       let m = (dt.getMonth() + 1).toString().replace(/^(\d)$/, '0$1')
@@ -94,7 +96,7 @@
       return splitted.map((_, i) => splitted[i ^ 56]).join('')
     }
   
-    static fen2obj(fen: string = Game.defaultFen): fenObj {
+    static fen2obj(fen: string = Game.defaultFen): IFenObj {
       let [fenPos, turn, castling, enPassant, shalfMoveClock, sfullMoveNumber] = fen.split(/\s+/)
       let pos = Game.expandFenPos(fenPos)
       let halfMoveClock: number  = parseInt(shalfMoveClock)
@@ -102,7 +104,7 @@
       return {pos, fenPos, turn, castling, enPassant, halfMoveClock, fullMoveNumber}
     }
   
-    static obj2fen(fenObj: fenObj): string {
+    static obj2fen(fenObj: IFenObj): string {
       let {pos, fenPos, turn, castling, enPassant, halfMoveClock, fullMoveNumber} = fenObj
       if (typeof fenPos === 'undefined') {
         fenPos = Game.compressFenPos(pos)
@@ -138,7 +140,7 @@
         return `${String.fromCharCode((sq % 8) + 97)}${Math.floor(sq / 8) + 1}`
     }
 
-    static results: iResults = {
+    static results: IResults = {
       white: '1-0',
       black: '0-1',
       draw: '1/2-1/2',
@@ -153,8 +155,8 @@
     static berlinFen: string = 'r1bk1b1r/ppp2ppp/2p5/4Pn2/8/5N2/PPP2PPP/RNB2RK1 w - - 0 9'
 
     fens: string[] = []
-    sans: iMoveInfo[] = []
-    tags: iSevenTags = <iSevenTags>{
+    sans: IMoveInfo[] = []
+    tags: ISevenTags = <ISevenTags>{
       Event: 'Internet Game',
       Site: 'Internet',
       Date: Game.PgnDate(),
@@ -170,7 +172,7 @@
   
     reset(fen: string = Game.defaultFen) {
       this.fens = [fen]
-      this.sans = [<iMoveInfo>{}]
+      this.sans = [<IMoveInfo>{}]
     }
   
     getMaxPos() {return this.fens.length - 1}
@@ -239,7 +241,7 @@
           || (pos[from] == 'p' && Game.row(to) === 0)
     }
 
-    moveInfo2san(info: iMoveInfo): string {
+    moveInfo2san(info: IMoveInfo): string {
         if (this.isShortCastling(info.from, info.to)) return 'O-O'
         if (this.isLongCastling(info.from, info.to)) return 'O-O-O'
         let figure: string = !info.figureFrom.match(/[Pp]/)
@@ -260,7 +262,7 @@
         return `${figure}${capture}${dest}${promotion}${checkInfo}`
     }
 
-    canMove(moveInfo: iMoveInfo) {
+    canMove(moveInfo: IMoveInfo) {
       let { figureFrom, figureTo, turn } = moveInfo
 
       if ("pnbrqkPNBRQK".indexOf(figureFrom) === -1) return false
@@ -269,6 +271,25 @@
         || (Game.isBlackFigure(figureFrom) && turn === 'w')) return false
       
       return true
+    }
+
+// Beginning of public interface methods
+
+    ascii(flipBoard: boolean = false, n: number = this.getMaxPos()): string {
+      let dottedPos = this.getPos(n).replace(/0/g, '.')
+      let header = '   +------------------------+'
+      let blank =  ' '.repeat(header.length)
+      let footer= flipBoard ? '     h  g  f  e  d  c  b  a' : '     a  b  c  d  e  f  g  h'
+      let rows = []
+      for (let y = 0; y < 8; y++) {
+          let r = flipBoard ? ` ${y + 1} |` : ` ${8 - y} |`
+          for (let x = 0; x < 8; x++) {
+              r += ` ${dottedPos[(y * 8 + x) ^ (flipBoard ? 7 : 56)]} `
+          }
+          r += '|'
+          rows.push([r, blank].join('\n'))
+      }
+      return [header, blank, ...rows, header, blank, footer].join('\n')
     }
 
     move(from: any, to: any, promotion: string = null): boolean {
@@ -280,14 +301,14 @@
           to = Game.san2sq(to)
         }  
 
-        let fObj: fenObj = Game.fen2obj(this.fens[this.getMaxPos()])
+        let fObj: IFenObj = Game.fen2obj(this.fens[this.getMaxPos()])
         let pos: string[] = fObj.pos.split('')
         let turn: string = fObj.turn
         let figFrom: string = pos[from]
         let figInTo: string = pos[to]
         let figTo: string = promotion ? promotion : figFrom
 
-        let moveInfo = <iMoveInfo>{enPassant: false}
+        let moveInfo = <IMoveInfo>{enPassant: false}
 
 
         moveInfo.turn = turn
@@ -400,7 +421,7 @@
 
     pgnMoves(): string {
         let resp: string = this.history({verbose: true}).map(mi => {
-            let info: iMoveInfo = <iMoveInfo>mi
+            let info: IMoveInfo = <IMoveInfo>mi
             let prefix: string = info.turn === 'w' ? `${info.fullMoveNumber}. ` : ''
             let ep: string = info.enPassant ? ' e.p.' : ''
             return `${prefix}${info.san}${ep}`
@@ -410,7 +431,7 @@
     }
 
     pgn(): string {
-      return [this.pgnHeaders(), this.pgnMoves()].join('\n\n')
+      return `${[this.pgnHeaders(), this.pgnMoves()].join('\n\n')} ${this.tags.Result}`
     }
 
     undo(): boolean {

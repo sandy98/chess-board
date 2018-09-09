@@ -32,13 +32,13 @@ declare global {
       'default': () => void;
       'empty': () => void;
       'flip': () => void;
-      'game': object;
       'getBoardHeight': () => number;
       'getCastling': (n?: number) => string;
       'getCurrent': () => number;
       'getEnPassant': (n?: number) => string;
       'getFenPos': (n?: number) => string;
       'getFullMoveNumber': (n?: number) => string;
+      'getGame': () => object;
       'getHalfMoveClock': (n?: number) => string;
       'getInitialFen': () => string;
       'getMaxPos': () => number;
@@ -125,7 +125,6 @@ declare global {
 
     export interface ChessBoardAttributes extends HTMLAttributes {
       'autoPromotion'?: string;
-      'game'?: object;
       'highLightBg'?: string;
       'humanSide'?: string;
       'id'?: string;

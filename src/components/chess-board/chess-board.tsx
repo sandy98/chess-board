@@ -6,26 +6,46 @@ import Game from '../../lib/game'
 const getUuid = (): string => new Date().getTime().toString(16)
 
 
-interface iBoardModes {
+interface IBoardModes {
   MODE_ANALYSIS: string
   MODE_PLAY: string  
   MODE_SETUP: string
   MODE_VIEW: string
 }
 
-interface iSchema {
+interface ISchema {
   light: string
   dark: string
 }
 
-interface iSchemas {
-  brown: iSchema
-  blue: iSchema
-  acqua: iSchema
-  green: iSchema
+interface ISchemas {
+  brown: ISchema
+  blue: ISchema
+  acqua: ISchema
+  green: ISchema
 }
 
-interface fenObj {
+interface IFigurine {
+  codePoint: string
+  html: string
+}
+
+interface IFigurines {
+  p: IFigurine
+  n: IFigurine
+  b: IFigurine
+  r: IFigurine
+  q: IFigurine
+  k: IFigurine
+  P: IFigurine
+  N: IFigurine
+  B: IFigurine
+  R: IFigurine
+  Q: IFigurine
+  K: IFigurine
+}
+
+interface IFenObj {
   pos: string
   fenPos: string
   turn: string
@@ -35,7 +55,6 @@ interface fenObj {
   fullMoveNumber: number
 }
 
-
 @Component({
   tag: 'chess-board',
   styleUrl: 'chess-board.css',
@@ -43,21 +62,21 @@ interface fenObj {
 })
 export class ChessBoard {
   
-  static boardModes: iBoardModes = {
+  static boardModes: IBoardModes = {
     MODE_ANALYSIS: 'MODE_ANALYSIS',
     MODE_PLAY: 'MODE_PLAY',
     MODE_SETUP: 'MODE_SETUP',
     MODE_VIEW: 'MODE_VIEW'
   } 
 
-  static schemas: iSchemas = {
+  static schemas: ISchemas = {
     brown: {light: '#f0d9b5', dark: '#b58863'},
     blue: {light: '#add8e6', dark: '#6495ed'},
     acqua: {light: '#dfdfdf', dark: '#56b6e2'},
     green: {light: 'beige', dark: '#769656'}
   }
 
-  static figurines: object = {
+  static figurines: IFigurines = {
     p: {codePoint: '0x265f',	html: '&#9823;'},
     n: {codePoint: '0x265e',	html: '&#9822;'},
     b: {codePoint: '0x265d',	html: '&#9821;'},
@@ -87,7 +106,7 @@ export class ChessBoard {
   }
   @Prop() id: string = getUuid()
   @Prop({reflectToAttr: true}) initialFen: string
-  @Prop({mutable: true}) game: object = new Game(this.getInitialFen())
+  game: Game = new Game(this.getInitialFen())
   //@Prop({mutable: true}) realGame: object = new ChessGame(this.getInitialFen())
 
   @Prop() initialFlipped: boolean = false
@@ -118,7 +137,7 @@ export class ChessBoard {
   @State() lightBgColor: string = this.initialLightBgColor || ChessBoard.schemas.blue.light
   @State() darkBgColor: string = this.initialDarkBgColor || ChessBoard.schemas.blue.dark
   @State() current: number = 0
-  @State() setupObj: fenObj = null
+  @State() setupObj: IFenObj = null
   @State() castlingPermissions: string[]
   @State() isPromoting: boolean = false
   @State() menuX: number = 0
@@ -180,7 +199,7 @@ export class ChessBoard {
   @Listen('moveEvent')
   handleMoveEvent(mEv: CustomEvent) {
     console.log(`Move: ${mEv.detail.toString()}`)
-    //console.log(this.game['pgn']())
+    //console.log(this.game.pgn())
     this['notationElement'].scrollTop = this['notationElement'].scrollHeight
   }
 
@@ -226,15 +245,16 @@ export class ChessBoard {
     this.resetGame()
   }
 
+  @Method() getGame(): object {return this.game}
   @Method() getCurrent(): number {return this.current}
   @Method() getMode(): string {return this.boardMode}
 
-  @Method() getPgnMoves(): string {return this.game['pgnMoves']()}
+  @Method() getPgnMoves(): string {return this.game.pgnMoves()}
 
   @Method() 
   undo(): boolean {
     if (this.boardMode === ChessBoard.boardModes.MODE_PLAY) return false
-    let res: boolean = this.game['undo']()
+    let res: boolean = this.game.undo()
     if (res) this.goto(this.getMaxPos())
     return res
   }
@@ -248,7 +268,7 @@ export class ChessBoard {
   @Method()
   setup() {
     if (this.current !== this.getMaxPos()) this.current = this.getMaxPos()
-    this.setupObj = Game.fen2obj(this.game['fens'][this.getMaxPos()])
+    this.setupObj = Game.fen2obj(this.game.fens[this.getMaxPos()])
     delete(this.setupObj.fenPos)
     let castling: string = this.setupObj.castling
     this.castlingPermissions = [
@@ -279,8 +299,8 @@ export class ChessBoard {
   _getWhat(what: string = 'getPos', n: number = this.current): string {
     let num = n < 0 
       ? 0
-      : n >= this.game['fens'].length 
-      ? this.game['fens'].length - 1
+      : n >= this.game.fens.length
+      ? this.game.fens.length - 1
       : n
     return this.game[what](num)
   }
@@ -336,7 +356,7 @@ export class ChessBoard {
 
   @Method()
   resetGame(fen: string = this.getInitialFen()) {
-    this.game['reset'](fen)
+    this.game.reset(fen)
     this.current = 0
     this.flip()
     this.flip()
@@ -416,7 +436,7 @@ export class ChessBoard {
   }
 
   @Method() 
-  getMaxPos(): number {return this.game['fens'].length - 1}
+  getMaxPos(): number {return this.game.fens.length - 1}
   
   @Method()
   setSquare(square: number, figure: string) {
@@ -491,7 +511,7 @@ export class ChessBoard {
       this.setSquare(sqTo, promotion ? promotion : figure)
       if (sqFrom < 64) {this.setSquare(sqFrom, '0')}
     } else {
-      if (this.game['isPromoting'](sqFrom, sqTo)) {
+      if (this.game.isPromoting(sqFrom, sqTo)) {
         if (!promotion) {
           this.sqFrom = sqFrom
           this.sqTo = sqTo
@@ -502,10 +522,10 @@ export class ChessBoard {
           promotion = this.getTurn() === 'b' ? promotion.toLowerCase() : promotion.toUpperCase()
         }
       }
-      let bMove = this.game['move'](sqFrom, sqTo, promotion)
+      let bMove = this.game.move(sqFrom, sqTo, promotion)
       if (bMove) {
         this.current++
-        let history: string[] = this.game['history']()
+        let history: string[] = this.game.history()
         let detail: string = history[history.length - 1]
         this.moveEvent.emit(detail)
       }
@@ -530,7 +550,7 @@ export class ChessBoard {
       fontFamily: 'monospace'
     }
 
-    let history = this.game['history']({verbose: true})
+    let history = this.game.history({verbose: true})
   
     return ([
       <div
@@ -545,13 +565,13 @@ export class ChessBoard {
         }}
       >
         <custom-p>
-          White<span style={{...tagStyle}}>{this.game['tags']['White']}</span>
+          White<span style={{...tagStyle}}>{this.game.tags.White}</span>
         </custom-p>
         <custom-p>
-          Black<span style={{...tagStyle}}>{this.game['tags']['Black']}</span>
+          Black<span style={{...tagStyle}}>{this.game.tags.Black}</span>
         </custom-p>
         <custom-p>
-          Result<span style={{...tagStyle}}>{this.game['tags']['Result']}</span>
+          Result<span style={{...tagStyle}}>{this.game.tags.Result}</span>
         </custom-p>
       </div>,
       <div
@@ -602,14 +622,15 @@ export class ChessBoard {
                   background: (index + 1) === this.current ? this.lightBgColor : 'inherit'
                 }}
               >
-                <span>&nbsp;</span>
+                <div>&nbsp;</div>
                   {
                     this.useFigurines && !figure.match(/[Pp]/) && !castling
-                      ? <div style={{
-                            display: 'flex', 
-                            flexDirection: 'row',
-                            justifyContent: 'flexStart',
-                            alignItems: 'center'
+                      ? <div 
+                          style={{
+                          display: 'flex', 
+                          flexDirection: 'row',
+                          justifyContent: 'flexStart',
+                          alignItems: 'center'
                           }}
                         >
                           {prefix}
@@ -621,14 +642,20 @@ export class ChessBoard {
                           
                         </div>
                        : <div
+                           style={{
+                             display: 'flex', 
+                             flexDirection: 'row',
+                             justifyContent: 'flexStart',
+                             alignItems: 'center'
+                           }}
                            innerHTML={promotion && this.useFigurines 
-                             ? san.replace(/[NBRQ]/, `<span style="font-size: 2em; color: black;">${ChessBoard.figurines[promotion]['html']}</span>`)
+                             ? san.replace(/[NBRQ]/, `<span style="font-size: 2em; color: black;">${ChessBoard.figurines[promotion].html}</span>`)
                              : san
                            }
                          >
                          </div>
                   }
-                <span>&nbsp;</span>
+                <div>&nbsp;</div>
               </div>
             )
           }

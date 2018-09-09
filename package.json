@@ -1,5 +1,5 @@
 {
-  "name": "chess-board",
+  "name": "chess-board-wc",
   "version": "0.1.0",
   "description": "ChessBoard web component compiled by Stencil",
   "module": "dist/esm/index.js",
@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "stencil build",
+    "prepublish": "stencil build",
     "start": "stencil build --dev --watch --serve",
     "test": "jest",
     "test.watch": "jest --watch"
@@ -19,7 +20,7 @@
     "chess-sets": "^1.0.0"
   },
   "devDependencies": {
-    "@stencil/core": "^0.11.0",
+    "@stencil/core": "^0.11.4",
     "@types/jest": "^23.3.1",
     "jest": "^23.4.2"
   },

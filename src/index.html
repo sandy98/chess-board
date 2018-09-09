@@ -193,7 +193,7 @@
     }
     const preparePage = () => {
       console.log('Initializing...')
-      Game = board.game ? board.game.constructor : null
+      Game = board.getGame() ? board.getGame().constructor : null
       populateSets()
       populateSchemas()
       populatePositions()
@@ -207,52 +207,11 @@
       document.addEventListener('flipEvent', (ev) => {
         document.querySelector('#btnFlip').innerText = !!ev.detail === true ? "Unflip Board" : "Flip Board"
       })
-      
-      const keybdHandler = (ev) => {
-        // console.log("")
-        // console.log("code: " + ev.code)        
-        // console.log("chrCode: " + ev.charCode)        
-        // console.log("key: " + ev.key)
-        // console.log("keyCode: " + ev.keyCode)      
-
-        switch (ev.keyCode) {
-          case 36: //Home
-          ev.preventDefault()
-          board.goto(0)
-          break
-          case 35: //End
-          ev.preventDefault()
-          board.goto(board.getMaxPos())
-          break
-          case 33: // PageUp
-          ev.preventDefault()
-          board.goto(board.getCurrent() - 10)
-          break
-          case 34: //PageDown
-          ev.preventDefault()
-          board.goto(board.getCurrent() + 10)
-          break
-          case 37: // ArrowLeft
-          ev.preventDefault()
-          board.goto(board.getCurrent() - 1)
-          break
-          case 39: //ArrowRight
-          ev.preventDefault()
-          board.goto(board.getCurrent() + 1)
-          break
-          default:
-          //do Nothing
-        }
-      }
-
-    //  document.body.onkeydown = keybdHandler
-      
       onResize()
     }
     
     const onload = () => setTimeout(preparePage, 0)
     document.body.onload = onload
-    // document.addEventListener('load', onload)
   </script>
 </body>
 </html>
