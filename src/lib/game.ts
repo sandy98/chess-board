@@ -47,9 +47,17 @@
     tags: ISevenTags
     fens: string[]
     sans: IMoveInfo[]
-    ascii(flipBoard: boolean, n: number)
-    move(from: any, to: any, promotion: string): boolean
-    fen(): string
+    ascii(flipBoard: boolean, n: number): string
+    clear(): void
+    fen(index: number): string
+    game_over(): boolean
+    get(square: any, index: number): string
+    in_check(index: number): boolean
+    in_checkmate(index: number): boolean
+    in_draw(index: number): boolean
+    in_stalemate(index: number): boolean
+    in_threefold_repetition(index: number): boolean
+    move(...args: any[]): boolean
     pgn(): string
   }
 
@@ -138,6 +146,14 @@
     static sq2san(sq: number): string {
         if (sq < 0 || sq > 63) return '-'
         return `${String.fromCharCode((sq % 8) + 97)}${Math.floor(sq / 8) + 1}`
+    }
+
+    static isEqualPos(fen1: string, fen2: string): boolean {
+      let [fen_obj1, fen_obj2] = [Game.fen2obj(fen1), Game.fen2obj(fen2)]
+      return fen_obj1.fenPos === fen_obj2.fenPos
+        && fen_obj1.turn === fen_obj2.turn
+        && fen_obj1.castling === fen_obj2.castling
+        && fen_obj1.enPassant === fen_obj2.enPassant
     }
 
     static results: IResults = {
@@ -262,7 +278,14 @@
         return `${figure}${capture}${dest}${promotion}${checkInfo}`
     }
 
+    san2MoveInfo(san: string): IMoveInfo {
+      //Not implemented. To be implemented by derived classes
+      if (!san.length) return <IMoveInfo>null
+      return <IMoveInfo>null
+    }
+
     canMove(moveInfo: IMoveInfo) {
+      //Must override
       let { figureFrom, figureTo, turn } = moveInfo
 
       if ("pnbrqkPNBRQK".indexOf(figureFrom) === -1) return false
@@ -271,6 +294,25 @@
         || (Game.isBlackFigure(figureFrom) && turn === 'w')) return false
       
       return true
+    }
+
+    pgnHeaders(): string {
+      let arr = []
+      for (let t in this.tags) {
+        arr = [...arr, `[${t} "${this.tags[t]}"]`]
+      }
+      return arr.join('\n')
+    }
+
+    pgnMoves(): string {
+        let resp: string = this.history({verbose: true}).map(mi => {
+            let info: IMoveInfo = <IMoveInfo>mi
+            let prefix: string = info.turn === 'w' ? `${info.fullMoveNumber}. ` : ''
+            let ep: string = info.enPassant ? ' e.p.' : ''
+            return `${prefix}${info.san}${ep}`
+        })
+        .join('  ')
+        return resp
     }
 
 // Beginning of public interface methods
@@ -292,14 +334,109 @@
       return [header, blank, ...rows, header, blank, footer].join('\n')
     }
 
-    move(from: any, to: any, promotion: string = null): boolean {
-        if (typeof from === 'string') {
-          from = Game.san2sq(from)
-        }  
+    clear(): void {
+      this.reset(Game.emptyFen)
+    }
 
-        if (typeof to === 'string') {
-          to = Game.san2sq(to)
-        }  
+    fen(index: number = this.getMaxPos()): string {return this.fens[index]}
+
+    history(options: object = {verbose: false}): any[] {
+        if (options['verbose']) {
+            return this.sans.slice(1)
+        } else {
+            return this.sans.slice(1).map( mi => mi.san)
+        }
+    }
+
+    game_over(): boolean {
+      //Must override
+      return false
+    }
+
+    get(square: any, index: number = this.getMaxPos()): string {
+      if (typeof square === 'string') square = Game.san2sq(square)
+      return this.getPos(index)[square]
+    }
+
+    in_check(index: number = this.getMaxPos()): boolean {
+      //Must override
+      if (index < 0 || index > this.getMaxPos()) return false
+      return false
+    }
+
+    in_checkmate(index: number = this.getMaxPos()): boolean {
+      //Must override
+      if (index < 0 || index > this.getMaxPos()) return false
+      return false
+    }
+
+    in_draw(index: number = this.getMaxPos()): boolean {
+      //Must override
+      if (index < 0 || index > this.getMaxPos()) return false
+      return false
+    }
+
+    in_stalemate(index: number = this.getMaxPos()): boolean {
+      //Must override
+      if (index < 0 || index > this.getMaxPos()) return false
+      return false
+    }
+
+    in_threefold_repetition(index: number = this.getMaxPos()): boolean {
+      if (index < 0 || index > this.getMaxPos()) return false
+        let sliced: string[] = this.fens.map(fen => fen.split(/\s+/).slice(0, 4).join(' '))
+        // console.log(sliced)
+        for (let i = 0; i <= index; i++ ) {
+          let reps = 1
+          for (let j = i + 1; j <= index; j++) {
+            if (sliced[i] === sliced[j]) {
+              reps++
+              console.log(`Position ${sliced[j]} has repeated ${reps} times`)
+              if (reps >= 3) {
+                return true
+              }
+            }
+          }
+        }
+      return false
+    }
+
+
+
+
+
+
+
+
+
+    move(...args: any[]): boolean {
+        let moveInfo: IMoveInfo
+        let from: any
+        let to: any
+        let promotion: string
+
+        if (args.length === 0) {
+          return false
+        } else if (args.length === 1) {
+          if (typeof args[0] === 'string') {
+            moveInfo = this.san2MoveInfo(args[0])
+            if (!moveInfo) return false 
+            from = moveInfo.from
+            to = moveInfo.to
+            promotion = moveInfo.promotion
+          } else {
+            return false
+          }
+        } else {
+            [from, to, promotion] = args
+            if (typeof from === 'string') {
+              from = Game.san2sq(from)
+            }  
+    
+            if (typeof to === 'string') {
+              to = Game.san2sq(to)
+          }  
+        }
 
         let fObj: IFenObj = Game.fen2obj(this.fens[this.getMaxPos()])
         let pos: string[] = fObj.pos.split('')
@@ -308,8 +445,7 @@
         let figInTo: string = pos[to]
         let figTo: string = promotion ? promotion : figFrom
 
-        let moveInfo = <IMoveInfo>{enPassant: false}
-
+        moveInfo = <IMoveInfo>{enPassant: false}
 
         moveInfo.turn = turn
         moveInfo.from = from
@@ -399,35 +535,6 @@
         this.fens = [...this.fens, Game.obj2fen(fObj)]
         this.sans = [...this.sans, moveInfo]
         return true
-    }
-
-    fen(): string {return this.fens[this.getMaxPos()]}
-
-    history(options: object = {verbose: false}): any[] {
-        if (options['verbose']) {
-            return this.sans.slice(1)
-        } else {
-            return this.sans.slice(1).map( mi => mi.san)
-        }
-    }
-
-    pgnHeaders(): string {
-      let arr = []
-      for (let t in this.tags) {
-        arr = [...arr, `[${t} "${this.tags[t]}"]`]
-      }
-      return arr.join('\n')
-    }
-
-    pgnMoves(): string {
-        let resp: string = this.history({verbose: true}).map(mi => {
-            let info: IMoveInfo = <IMoveInfo>mi
-            let prefix: string = info.turn === 'w' ? `${info.fullMoveNumber}. ` : ''
-            let ep: string = info.enPassant ? ' e.p.' : ''
-            return `${prefix}${info.san}${ep}`
-        })
-        .join('  ')
-        return resp
     }
 
     pgn(): string {
