@@ -73,7 +73,7 @@
     validate_fen(fen: string): boolean    
   }
 
-  export default class Game implements IGame {
+  class Game implements IGame {
     static capitalize(word: string): string {
       return `${word[0].toUpperCase()}${word.split('').slice(1).join('').toLowerCase()}`
     }
@@ -630,4 +630,4 @@
 
   }
   
-
+export {Game}

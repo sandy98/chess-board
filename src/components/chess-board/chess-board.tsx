@@ -1,6 +1,6 @@
 import { Component, Prop, State, Listen, Method, Watch, Event, EventEmitter} from '@stencil/core'
 import chessSets from 'chess-sets'
-import Game from '../../lib/game'
+import { Game } from '../../lib/game'
 //import { ChessGame } from '../../lib/game'
 
 const getUuid = (): string => new Date().getTime().toString(16)
