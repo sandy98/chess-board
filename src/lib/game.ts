@@ -59,9 +59,15 @@
     in_threefold_repetition(index: number): boolean
     move(...args: any[]): boolean
     pgn(): string
+    header(...args: string[]): ISevenTags
+    insufficient_material(n: number): boolean
   }
 
   export default class Game implements IGame {
+    static capitalize(word: string): string {
+      return `${word[0].toUpperCase()}${word.split('').slice(1).join('').toLowerCase()}`
+    }
+
     static PgnDate(dt: Date = new Date()): string {
       let y = dt.getFullYear()
       let m = (dt.getMonth() + 1).toString().replace(/^(\d)$/, '0$1')
@@ -401,7 +407,22 @@
       return false
     }
 
+    header(...args: string[]): ISevenTags {
+      if (Game.isOdd(args.length)) args = args.slice(0, args.length - 1)
+      if (!args.length) return this.tags
+      let [keys, values] = [args.filter((_, i) => Game.isEven(i)).map(Game.capitalize),
+        args.filter((_, i) => Game.isOdd(i))]
+      for (let n: number = 0; n < keys.length; n++) {
+        this.tags[keys[n]] = values[n]
+      }
+      return this.tags
+    }
 
+    insufficient_material(_: number = this.getMaxPos()): boolean
+    {
+      //Must override
+      return false
+    }
 
 
 
