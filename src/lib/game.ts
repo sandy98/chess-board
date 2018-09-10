@@ -66,6 +66,11 @@
     load_pgn(pgn: string): boolean  
     put(figure: string, square: any, index: number): boolean
     remove(square: any, index: number): boolean
+
+    square_color(square: any): string
+    turn(index: number): string
+    undo(): boolean
+    validate_fen(fen: string): boolean    
   }
 
   export default class Game implements IGame {
@@ -601,12 +606,28 @@
       return this.put('0', square, index)
     }
 
+    square_color(square: any): string {
+      if (typeof square === 'string') square = Game.san2sq(square)
+      return Game.isDark(square) ? 'dark' : 'light'
+    }
+
+    turn(index: number = this.getMaxPos()): string {
+      return this.getTurn(index)
+    }
+
     undo(): boolean {
       if (this.getMaxPos() < 1) return false
       this.fens.pop()
       this.sans.pop()
       return true
     }
+
+    validate_fen(fen: string): boolean {
+      //Must override
+      if (fen.length) return true
+      return false
+    }    
+
   }
   
 
