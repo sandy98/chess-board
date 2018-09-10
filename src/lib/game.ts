@@ -58,9 +58,14 @@
     in_stalemate(index: number): boolean
     in_threefold_repetition(index: number): boolean
     move(...args: any[]): boolean
+    moves(options: object): string[]
     pgn(): string
     header(...args: string[]): ISevenTags
     insufficient_material(n: number): boolean
+    load(fen: string): boolean
+    load_pgn(pgn: string): boolean  
+    put(figure: string, square: any, index: number): boolean
+    remove(square: any, index: number): boolean
   }
 
   export default class Game implements IGame {
@@ -424,11 +429,18 @@
       return false
     }
 
+    load(fen: string = Game.defaultFen): boolean {
+      this.reset(fen)
+      return true
+    }
 
+    load_pgn(pgn: string): boolean {
+      if (!pgn.length) return false
+      //Must override
+      return false
+    }
 
-
-
-
+      
 
     move(...args: any[]): boolean {
         let moveInfo: IMoveInfo
@@ -558,8 +570,35 @@
         return true
     }
 
+    moves(options: object = null): string[] {
+      //Must override
+      if (!!options) {
+        return []
+      } else {
+        return []
+      }
+    } 
+
     pgn(): string {
       return `${[this.pgnHeaders(), this.pgnMoves()].join('\n\n')} ${this.tags.Result}`
+    }
+
+    put(figure: string, square: any, index: number = this.getMaxPos()): boolean {
+      if ("pnbrqk0".indexOf(figure.toLowerCase()) === -1) return false
+      if (typeof square === 'string') square = Game.san2sq(square)
+      if (square < 0 || square > 63) return false
+      let fen_obj: IFenObj = Game.fen2obj(this.fens[index])
+      let posArray: string[] = fen_obj.pos.split('')
+      posArray[square] = figure
+      delete(fen_obj.fenPos)
+      fen_obj.pos = posArray.join('')
+      let fen: string = Game.obj2fen(fen_obj)
+      this.fens[index] = fen
+      return true
+    }
+
+    remove(square: any, index: number = this.getMaxPos()): boolean {
+      return this.put('0', square, index)
     }
 
     undo(): boolean {
