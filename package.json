@@ -1,5 +1,5 @@
 {
-  "name": "chess-board-wc",
+  "name": "@sandy98/chess-board",
   "version": "0.1.0",
   "description": "ChessBoard web component compiled by Stencil",
   "module": "dist/esm/index.js",
