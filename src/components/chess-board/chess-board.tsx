@@ -91,7 +91,7 @@ export class ChessBoard {
     K: {codePoint: '0x2654',	html: '&#9812;'}
   }
 
-  @Prop() version: string = '0.1.0'
+  @Prop() version: string = '0.9.1'
   @Prop({mutable: true}) useFigurines: boolean = true
   @Prop() sets: object = chessSets
   @Prop({mutable: true}) set: string = 'default'

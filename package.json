@@ -1,6 +1,6 @@
 {
   "name": "@sandy98/chess-board",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "ChessBoard web component compiled using Stencil components compiler",
   "module": "dist/esm/index.js",
   "main": "dist/index.js",
@@ -8,6 +8,14 @@
   "collection": "dist/collection/collection-manifest.json",
   "files": [
     "dist/"
+  ],
+  "keywords": [
+    "chess",
+    "chess-board",
+    "chessboard",
+    "web-component",
+    "stencil.js",
+    "configurable-chess-board"
   ],
   "scripts": {
     "build": "stencil build",
