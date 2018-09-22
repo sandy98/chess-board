@@ -1,5 +1,5 @@
 
-  interface IFenObj {
+  export interface IFenObj {
     pos: string
     fenPos: string
     turn: string
@@ -9,14 +9,14 @@
     fullMoveNumber: number
   }
   
-  interface IResults {
+  export interface IResults {
     white: string
     black: string
     draw: string
     unterminated: string
   }
 
-  interface ISevenTags {
+  export interface ISevenTags {
     Event: string
     Site: string
     Date: string
@@ -26,7 +26,7 @@
     Result: string
   }
 
-  interface IMoveInfo {
+  export interface IMoveInfo {
     turn: string  
     from: number
     to: number
@@ -34,6 +34,7 @@
     figureTo: string
     promotion: string
     capture: boolean
+    infoOrigin?: string
     check?: boolean
     checkmate?: boolean
     stalemate?: boolean
@@ -43,7 +44,7 @@
     enPassant: boolean
   }
 
-  interface IGame {
+  export interface IGame {
     tags: ISevenTags
     fens: string[]
     sans: IMoveInfo[]
@@ -73,7 +74,14 @@
     validate_fen(fen: string): boolean    
   }
 
-  class Game implements IGame {
+  export class Game implements IGame {
+    static outOfBounds(...args: number[]): boolean {
+      for (let n: number = 0; n < args.length; n++) {
+        if (args[n] < 0 || args[n] > 63) return true
+      }
+      return false
+    }
+
     static capitalize(word: string): string {
       return `${word[0].toUpperCase()}${word.split('').slice(1).join('').toLowerCase()}`
     }
@@ -85,35 +93,75 @@
       return `${y}.${m}.${d}`
     }
 
-    static row(sq: number): number {
+    static row(sq: number|string): number {
+      if (typeof sq === 'string') sq = Game.san2sq(sq)
       return Math.floor(sq / 8)
     }
-    static col(sq: number): number {
+    static col(sq: number|string): number {
+      if (typeof sq === 'string') sq = Game.san2sq(sq)
       return sq % 8
     }
-    static isEven(sq: number): boolean {
+
+    static col2string(r: number): string {
+      return r < 8 && r >= 0 ? String.fromCharCode(r + 97) : ''
+    }
+
+    static string2col(c: string): number {
+      return !!c.match(/^[a-h]$/) ? c.charCodeAt(0) - 97 : -1
+    }
+
+    static row2string(r: number): string {
+      return r < 8 && r >= 0 ? (r + 1).toString(10) : ''
+    }
+
+    static string2row(c: string): number {
+      return !!c.match(/^[1-8]$/) ? c.charCodeAt(0) - 49 : -1
+    }
+
+    static rowcol2sq(row: number, col: number): number {
+      if (row < 0 || row > 7 || col < 0 || col > 7) return -1
+      return row * 8 + col
+    }
+
+    static isEven(sq: string|number): boolean {
+      if (typeof sq === 'string') sq = Game.san2sq(sq)
       return sq % 2 === 0
     }
-    static isOdd(sq: number): boolean {
+    static isOdd(sq: string|number): boolean {
+      if (typeof sq === 'string') sq = Game.san2sq(sq)
       return !Game.isEven(sq)
     }
-    static isLight(sq: number): boolean {
+    static isLight(sq: string|number): boolean {
+      if (typeof sq === 'string') sq = Game.san2sq(sq)
       const orec = Game.isOdd(Game.row(sq)) && Game.isEven(Game.col(sq))
       const eroc = Game.isEven(Game.row(sq)) && Game.isOdd(Game.col(sq))
       return orec || eroc
     }
-    static isDark(sq: number): boolean {
+    static isDark(sq: string|number): boolean {
       return !Game.isLight(sq)
     }
 
-    static compressFenPos(pos: string = Game.fen2obj()['pos']): string {
+    static xor56(pos: string): string {
+      let splitted: string[] = pos.split('')
+      return splitted.map((_, i) => splitted[i ^ 56]).join('')
+    }
+
+    static compressFenPos(pos: string = Game.fen2obj().pos): string {
+      return Game.xor56(pos).match(/\w{8}/g).join('/').replace(/0+/g, z => z.length.toString())
+    }
+
+    static expandFenPos(fenPos: string = Game.fen2obj().fenPos): string {
+      return Game.xor56(fenPos.split('/').join('').replace(/\d/g, d => '0'.repeat(parseInt(d))))
+    }
+
+    static deprecatedCompressFenPos(pos: string = Game.fen2obj().pos): string {
       let splitted = pos.split('')
       let inverted = splitted.map((_, i) => splitted[i ^ 56]).join('')
       return inverted.replace(/(\w{8})(?=\S)/g, "$1/")
       .replace(/(0+)/g, zeros => zeros.length.toString())
     }
   
-    static expandFenPos(fenPos: string = Game.fen2obj()['fenPos']): string {
+    static deprecatedExpandFenPos(fenPos: string = Game.fen2obj().fenPos): string {
       let expanded = fenPos.replace(/\//g, '')
       .replace(/\d/g, (i) => '0'.repeat(parseInt(i)))
       let splitted = expanded.split('')
@@ -172,6 +220,27 @@
         && fen_obj1.enPassant === fen_obj2.enPassant
     }
 
+    static boardArray(): number[] {
+      const arr = new Array(64)
+      arr.fill(0)
+      return arr.map((_, i) => i)
+    }g
+
+    static countFigures(figure: string, fen: string): number {
+      const pos: string[] = Game.fen2obj(fen).pos.split('')
+      return pos.filter(f => f === figure).length
+    }
+
+    static figuresArray(figure: string, fen: string): number[] {
+      const pos: string = Game.fen2obj(fen).pos
+      return Game.boardArray().filter(i => pos[i] === figure)
+    }
+
+    static figuresColors(figure: string, fen: string): string[] {
+      let figsArr: number[] = Game.figuresArray(figure, fen)
+      return figsArr.map(i => Game.isLight(i) ? 'light': 'dark')
+    }
+
     static results: IResults = {
       white: '1-0',
       black: '0-1',
@@ -185,6 +254,11 @@
     static indiareyFen: string = 'r1bq1rk1/pppnn1bp/3p4/3Pp1p1/P1P1Pp2/2N2P2/1P2BBPP/R2QNRK1 b - a3 0 13'
     static yugoslavFen: string = 'r1bq1rk1/pp2ppbp/2np1np1/8/3NP3/2N1BP2/PPPQ2PP/R3KB1R w KQ - 3 9'
     static berlinFen: string = 'r1bk1b1r/ppp2ppp/2p5/4Pn2/8/5N2/PPP2PPP/RNB2RK1 w - - 0 9'
+
+    static sanRegExp = /(?:(^0-0-0|^O-O-O)|(^0-0|^O-O)|(?:^([a-h])(?:([1-8])|(?:x([a-h][1-8])))(?:=?([NBRQ]))?)|(?:^([NBRQK])([a-h])?([1-8])?(x)?([a-h][1-8])))(?:(\+)|(#)|(\+\+))?$/
+  
+
+////////////////////////////////////////////////////////////
 
     fens: string[] = []
     sans: IMoveInfo[] = []
@@ -203,8 +277,12 @@
     }
   
     reset(fen: string = Game.defaultFen) {
+      if (!this.validate_fen(fen)) {
+        throw new Error('Invalid FEN')
+      }
       this.fens = [fen]
       this.sans = [<IMoveInfo>{}]
+      this.tags.Result = Game.results.unterminated
     }
   
     getMaxPos() {return this.fens.length - 1}
@@ -242,16 +320,14 @@
       return parseInt(this._getWhat(n, 'fullMoveNumber'))
     }
 
-    isShortCastling(from: number, to: number, npos: number = this.getMaxPos()): boolean {
-        let pos: string = this.getPos(npos)
-        return (from === 4 && to === 6 && pos[4] === 'K')
-          || (from === 60 && to === 62 && pos[60] === 'k')
+    isShortCastling(from: number, to: number, figure: string): boolean {
+        return (from === 4 && to === 6 && figure === 'K')
+          || (from === 60 && to === 62 && figure === 'k')
     } 
 
-    isLongCastling(from: number, to: number, npos: number = this.getMaxPos()): boolean {
-        let pos: string = this.getPos(npos)
-        return (from === 4 && to === 2 && pos[4] === 'K')
-          || (from === 60 && to === 58 && pos[60] === 'k')
+    isLongCastling(from: number, to: number, figure: string): boolean {
+        return (from === 4 && to === 2 && figure === 'K')
+          || (from === 60 && to === 58 && figure === 'k')
     } 
 
     isEnPassant(from: number, to: number, npos: number = this.getMaxPos()): boolean {
@@ -274,34 +350,39 @@
     }
 
     moveInfo2san(info: IMoveInfo): string {
-        if (this.isShortCastling(info.from, info.to)) return 'O-O'
-        if (this.isLongCastling(info.from, info.to)) return 'O-O-O'
+        
+        if (this.isShortCastling(info.from, info.to, info.figureFrom)) return 'O-O'
+        if (this.isLongCastling(info.from, info.to, info.figureFrom)) return 'O-O-O'
+        //console.log(`In moveInfo2san, figureFrom is: ${info.figureFrom}`)
         let figure: string = !info.figureFrom.match(/[Pp]/)
           ? info.figureFrom.toUpperCase()
           : info.capture
           ? Game.sq2san(info.from)[0]
           : ''
 
+        let infoOrigin: string = info.infoOrigin ? info.infoOrigin : ''
         let capture: string = info.capture ? 'x' : '' 
         let dest: string = Game.sq2san(info.to)
         let promotion: string = info.promotion ? `=${info.promotion.toUpperCase()}` : ''
         let checkInfo: string = info.checkmate
-          ? '++'
+          ? '#'
           : info.check
           ? '+'
           : '' 
 
-        return `${figure}${capture}${dest}${promotion}${checkInfo}`
+        return `${figure}${infoOrigin}${capture}${dest}${promotion}${checkInfo}`
     }
 
-    san2MoveInfo(san: string): IMoveInfo {
-      //Not implemented. To be implemented by derived classes
+    san2MoveInfo(san: string, fen: string = this.fen()): IMoveInfo {
+      //Must override
+      if (!fen.length) return <IMoveInfo>null
       if (!san.length) return <IMoveInfo>null
       return <IMoveInfo>null
     }
 
-    canMove(moveInfo: IMoveInfo) {
+    canMove(moveInfo: IMoveInfo, n: number = this.getMaxPos()): boolean {
       //Must override
+      if (n < 0 || n > this.getMaxPos()) return false
       let { figureFrom, figureTo, turn } = moveInfo
 
       if ("pnbrqkPNBRQK".indexOf(figureFrom) === -1) return false
@@ -434,6 +515,10 @@
       return false
     }
 
+    label(): string  {return `${this.tags.White} - ${this.tags.Black}\t ${this.tags.Result}`}
+
+    toString(): string {return this.label()}
+    
     load(fen: string = Game.defaultFen): boolean {
       this.reset(fen)
       return true
@@ -473,7 +558,7 @@
     
             if (typeof to === 'string') {
               to = Game.san2sq(to)
-          }  
+            }  
         }
 
         let fObj: IFenObj = Game.fen2obj(this.fens[this.getMaxPos()])
@@ -495,7 +580,8 @@
           && to === Game.san2sq(fObj.enPassant))
         moveInfo.san = this.moveInfo2san(moveInfo)
         moveInfo.fullMoveNumber = fObj.fullMoveNumber
-        moveInfo.castling = this.isShortCastling(from, to) || this.isLongCastling(from, to)
+        moveInfo.castling = this.isShortCastling(from, to, moveInfo.figureFrom) 
+          || this.isLongCastling(from, to, moveInfo.figureFrom)
 
         let bCan = this.canMove(moveInfo)
 
@@ -619,6 +705,7 @@
       if (this.getMaxPos() < 1) return false
       this.fens.pop()
       this.sans.pop()
+      this.tags.Result = Game.results.unterminated
       return true
     }
 
@@ -630,4 +717,4 @@
 
   }
   
-export {Game}
+ 

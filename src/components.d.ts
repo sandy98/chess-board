@@ -7,6 +7,9 @@
 import '@stencil/core';
 
 
+import {
+  Game,
+} from './lib/game';
 
 
 declare global {
@@ -36,6 +39,7 @@ declare global {
       'getCastling': (n?: number) => string;
       'getCurrent': () => number;
       'getEnPassant': (n?: number) => string;
+      'getEngine': () => string;
       'getFenPos': (n?: number) => string;
       'getFullMoveNumber': (n?: number) => string;
       'getGame': () => object;
@@ -61,11 +65,13 @@ declare global {
       'resetGame': (fen?: string) => void;
       'set': string;
       'setBg': (light: string, dark: string) => void;
+      'setEngine': (game?: Game) => boolean;
       'setSchema': (schema?: string) => void;
       'setSquare': (square: number, figure: string) => void;
       'sets': object;
       'setup': () => void;
       'trashbin': string;
+      'tryRemoteMove': (san: string) => boolean;
       'undo': () => boolean;
       'useFigurines': boolean;
       'version': string;

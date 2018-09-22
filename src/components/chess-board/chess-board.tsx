@@ -245,6 +245,17 @@ export class ChessBoard {
     this.resetGame()
   }
 
+  @Method() 
+  setEngine(game: Game = new Game()): boolean {
+    if (typeof game['move'] === 'undefined') return false // Test by "duck typing"
+    this.game = game
+    this.current = 0
+    this.flip()
+    this.flip()
+    return true
+  }
+
+  @Method() getEngine(): string {return this.game.constructor.name}
   @Method() getGame(): object {return this.game}
   @Method() getCurrent(): number {return this.current}
   @Method() getMode(): string {return this.boardMode}
@@ -447,6 +458,19 @@ export class ChessBoard {
     this.setupObj = {...this.setupObj, pos: arrPos.join('')}
   } 
 
+  @Method()
+  tryRemoteMove(san: string):boolean {
+    if (this.boardMode === ChessBoard.boardModes.MODE_SETUP) return false
+    let bMove: boolean = this.game.move(san)
+    if (bMove) {
+      this.current++
+      let history: string[] = this.game.history()
+      let detail: string = history[history.length - 1]
+      this.moveEvent.emit(detail)
+    }
+    return bMove
+  }
+
   onDragStart(figure: string, square: number, ev: DragEvent) {
     if (!this.canStartHere(figure)) {
       ev.preventDefault()
@@ -522,7 +546,7 @@ export class ChessBoard {
           promotion = this.getTurn() === 'b' ? promotion.toLowerCase() : promotion.toUpperCase()
         }
       }
-      let bMove = this.game.move(sqFrom, sqTo, promotion)
+      let bMove: boolean = this.game.move(sqFrom, sqTo, promotion)
       if (bMove) {
         this.current++
         let history: string[] = this.game.history()
